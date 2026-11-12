@@ -3,12 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "IELTS mock exam app with CEFR level estimation — Listening, Reading, Writing and Speaking",
+  "description": "IELTS mock exam app with CEFR level estimation \u2014 Listening, Reading, Writing and Speaking",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "access:hash": "node scripts/access.mjs hash",
+    "access:new": "node scripts/access.mjs new",
+    "access:add": "node scripts/access.mjs add",
+    "access:list": "node scripts/access.mjs list"
   },
   "dependencies": {
     "react": "^19.3.1",

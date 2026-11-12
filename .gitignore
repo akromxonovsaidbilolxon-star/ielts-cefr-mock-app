@@ -5,3 +5,9 @@ dist-ssr
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Access roster — contains password hashes for the deployed build.
+# Set VITE_ACCESS_ROSTER in your host's environment variables instead.
+.env.production
+.env.local
+.env.*.local
