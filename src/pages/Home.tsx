@@ -2,6 +2,13 @@ import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { bandToCefr, CEFR_DESCRIPTIONS, overallBand } from '../lib/scoring';
 import { latestBySkill, loadHistory } from '../lib/storage';
+import { loadMlHistory, latestMlSection } from '../lib/mlStorage';
+import {
+  averageScore,
+  formatScore,
+  scoreToAward,
+  awardLabel,
+} from '../lib/multilevel';
 import type { Attempt, Skill } from '../types';
 import {
   ArrowRightIcon,
@@ -61,9 +68,18 @@ const SKILLS: {
 
 export default function Home() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [mlOverall, setMlOverall] = useState<number | null>(null);
+  const [mlAward, setMlAward] = useState<string | null>(null);
 
   useEffect(() => {
     setAttempts(loadHistory());
+    const mlLatest = latestMlSection(loadMlHistory());
+    const mlScores = ['listening', 'reading', 'writing', 'speaking']
+      .map((s) => mlLatest[s]?.score)
+      .filter((v): v is number => typeof v === 'number');
+    const avg = averageScore(mlScores);
+    setMlOverall(avg);
+    setMlAward(avg !== null ? awardLabel(scoreToAward(avg)) : null);
   }, []);
 
   const latest = useMemo(() => latestBySkill(attempts), [attempts]);
@@ -129,17 +145,63 @@ export default function Home() {
       {overall !== null && cefr && (
         <div className="callout callout-ok" style={{ marginTop: '1.1rem' }}>
           <div className="callout-title">
-            Latest overall estimate: Band {overall.toFixed(1)} · CEFR {cefr}
+            Latest IELTS estimate: Band {overall.toFixed(1)}
           </div>
-          {CEFR_DESCRIPTIONS[cefr]} Based on your most recent {bands.length}{' '}
+          A rough CEFR equivalent is {cefr}: {CEFR_DESCRIPTIONS[cefr]}{' '}
+          This is <b>not</b> a Multilevel certificate result — for that, take the{' '}
+          <Link to="/multilevel">Multilevel exam</Link>. Based on your most recent {bands.length}{' '}
           skill{bands.length === 1 ? '' : 's'}. A full IELTS overall band uses all
           four skills, so take the skills you have not attempted yet.
         </div>
       )}
 
+      <section style={{ marginTop: '1.8rem' }}>
+        <div className="section-head">
+          <h2>Choose your exam</h2>
+          <span className="small muted">Two separate exams — pick the one you are preparing for</span>
+        </div>
+        <div className="skill-grid">
+          <Link to="/listening" className="skill-card exam-choice">
+            <div className="row-between">
+              <span className="skill-icon"><TrophyIcon /></span>
+              <span className="badge badge-brand">Band 0–9</span>
+            </div>
+            <h3>IELTS Mock Test</h3>
+            <p>
+              4 parts and 40 questions per skill in real IELTS format. Reports an
+              IELTS band score, not a CEFR level.
+            </p>
+            <div className="skill-card-foot">
+              <span>Listening · Reading · Writing · Speaking</span>
+              <span className="skill-go">Start →</span>
+            </div>
+          </Link>
+
+          <Link to="/multilevel" className="skill-card exam-choice">
+            <div className="row-between">
+              <span className="skill-icon" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                <BookIcon />
+              </span>
+              <span className="badge badge-accent">
+                {mlAward ? `${mlAward} · ${formatScore(mlOverall)}/75` : 'Score 0–75'}
+              </span>
+            </div>
+            <h3>Uzbekistan Multilevel (CEFR)</h3>
+            <p>
+              6 listening parts and 5 reading parts, 3 writing tasks and 4 speaking
+              stages. Reports B1, B2 or C1 — the national certificate bands.
+            </p>
+            <div className="skill-card-foot">
+              <span>35 + 35 questions · 3 tasks · 8 windows</span>
+              <span className="skill-go">Start →</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       <section style={{ marginTop: '2rem' }}>
         <div className="section-head">
-          <h2>Choose a skill</h2>
+          <h2>IELTS — choose a skill</h2>
           <span className="small muted">Start anywhere — results are saved in this browser</span>
         </div>
         <div className="skill-grid">

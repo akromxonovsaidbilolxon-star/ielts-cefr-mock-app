@@ -1643,3 +1643,60 @@ input, textarea, select {
   .auth-card { padding: 1.35rem; }
   .auth-wrap { padding: 0.9rem; align-items: start; padding-top: 2rem; }
 }
+
+/* ==================================================================
+   Multilevel (Uzbekistan) exam additions
+   ================================================================== */
+
+.exam-choice h3 { font-size: 1.08rem; }
+
+/* Two-up picture comparison for Speaking Part 1.2 */
+.ml-pictures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ml-picture {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.ml-picture svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.ml-picture figcaption {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 650;
+  padding-top: 0.4rem;
+}
+
+.ml-picture-wide { max-width: 520px; }
+
+@media (max-width: 560px) {
+  .ml-pictures { grid-template-columns: 1fr; }
+}
+
+/* Multilevel section tabs show the level as a small suffix */
+.btn .tiny { font-weight: 700; }
+
+/* Reading: notices and adverts read better in a boxed style */
+.passage-col .callout {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Long task guidance lists inside writing cards */
+.card details ul.list-check { font-size: 0.86rem; }
+
+/* Results band table highlight */
+.table tr[style*="brand-light"] td { font-weight: 600; }
