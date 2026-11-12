@@ -7,6 +7,7 @@ import { rawToSectionScore, sectionScoreToLevel } from '../lib/multilevel';
 import { newMlAttempt, saveMlAttempt } from '../lib/mlStorage';
 import { storeMlReview } from '../lib/mlReview';
 import AudioPlayer, { Transcript, useSpeechScript } from '../components/AudioPlayer';
+import { audioKeys } from '../lib/audioManifest';
 import { AnswerGrid, ProgressCard, TimerCard } from '../components/ExamShell';
 import { QuestionGroupBlock } from '../components/QuestionBlock';
 import { CheckIcon, PlayIcon } from '../components/Icons';
@@ -26,7 +27,7 @@ export default function MlListening() {
   answersRef.current = answers;
 
   const part = ML_LISTENING_PARTS[partIndex];
-  const speech = useSpeechScript(part.script);
+  const speech = useSpeechScript(part.script, audioKeys.multilevel(part.id));
 
   // Multilevel plays each recording TWICE.
   useEffect(() => {
