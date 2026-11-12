@@ -78,6 +78,107 @@ src/
 4. **Overall** — the mean of the skills attempted, rounded to the nearest half band,
    exactly as IELTS rounds an overall score.
 
+## Two separate exams
+
+The app contains **two independent exams**, each with its own question bank,
+timings, scoring and saved results. They never share content or history.
+
+| | **IELTS Mock** | **Uzbekistan Multilevel (CEFR)** |
+| --- | --- | --- |
+| Listening | 4 parts · 40 questions · 30 min | **6 parts · 35 questions · 45 min** |
+| Reading | 3 passages · 40 questions · 60 min | **5 parts · 35 questions · 60 min** |
+| Writing | 2 tasks · 60 min | **2 parts · 3 tasks · 60 min** |
+| Speaking | 3 parts · ~14 min | **4 stages · 8 windows · ~15 min** |
+| Result | IELTS band 0–9 | **Score /75 → B1, B2 or C1** |
+
+### Multilevel format
+
+Built to the national certificate specification:
+
+- **Listening** — six parts, 35 questions. Each recording is played **twice**,
+  with 15–30 seconds to read ahead. 45 minutes including answer transfer.
+- **Reading** — five parts, 35 questions, graded from short notices (A1–A2) to
+  an academic text (C1). 60 minutes including transfer.
+- **Writing** — two parts, three tasks, all inside one shared 60-minute timer:
+  - Part 1 · Task 1.1 — informal email, **~50 words**
+  - Part 1 · Task 1.2 — formal email, **120–150 words** (same situation)
+  - Part 2 · Task 2 — discussion post, **180–200 words**
+  - The shared source message sits above Tasks 1.1 and 1.2, and each task has its
+    own answer box and live word counter.
+- **Speaking** — four stages, **eight recording windows**:
+
+  | Stage | Level | Task | Prep | Window |
+  | --- | --- | --- | --- | --- |
+  | 1.1 | A1–A2 | 3 personal questions, one at a time | none | 30 s each |
+  | 1.2 | B1 | 3 questions on two pictures, one at a time | none | 45 s, then 30 s ×2 |
+  | 2 | B2 | one response covering 3 related questions | 60 s | 2 min |
+  | 3 | C1 | analyse both sides of a statement | 60 s | 2 min |
+
+### How the Multilevel score works
+
+Every section is scored out of **75**, and the overall result is the **average of
+the four sections**:
+
+| Level | Overall score |
+| --- | --- |
+| C1 | 65 – 75 |
+| B2 | 51 – 64 |
+| B1 | 38 – 50 |
+| Below B1 | 0 – 37 |
+
+There is **no C2** on this certificate — the exam contains no C2 tasks. A1 and A2
+appear only as general CEFR reference points, never as awards.
+
+Raw Listening/Reading marks are converted with a curve calibrated on the
+published thresholds (18/35 → 38, 24/35 → 51, 28/35 → 65, 35/35 → 75). The real
+exam uses a Rasch model, so treat the section score as a close approximation.
+
+### Exam Mode and Practice Mode
+
+- **Exam Mode** — everyone starts at Part 1 and follows the fixed section order,
+  task types and timings. Answers never change what comes next.
+- **Practice Mode** — choose a starting level per skill (B1, B2 or C1). After
+  each set the next one adapts: 80% or more moves you up, 40% or less moves you
+  down.
+
+`partNumber` and `difficulty` are deliberately **separate fields**:
+
+```ts
+interface MlQuestion {
+  number: number;
+  difficulty: 'A1' | 'A2' | 'B1' | 'B2' | 'C1';  // level of the material
+  // ...
+}
+interface MlListeningPart {
+  partNumber: number;   // exam task FORMAT: 1-6
+  difficulty: MlLevel;  // level of THIS set
+}
+```
+
+So "Listening Part 1 at B2" is a valid practice set — same task format, harder
+material — which is exactly how the app keeps format and difficulty independent.
+
+### Project layout (Multilevel)
+
+```
+src/content/multilevel/
+  types.ts      MlQuestion, MlListeningPart, MlReadingPart, MlSpeakingStage
+  listening.ts  6 parts, 35 questions
+  reading.ts    5 parts, 35 questions
+  writing.ts    shared source message + 3 tasks
+  speaking.ts   4 stages, 8 windows
+  index.ts      re-exports + official section specs
+src/lib/
+  multilevel.ts 0-75 scoring, band tables, descriptors, task weights
+  mlStorage.ts  Multilevel history and practice state (separate keys)
+  mlPractice.ts part/difficulty options and adaptive level logic
+  mlReview.ts   post-test answer review
+src/pages/
+  MlHome.tsx     hub with Exam/Practice mode switch
+  MlListening.tsx  MlReading.tsx  MlWriting.tsx  MlSpeaking.tsx
+  MlResults.tsx    MlProgress.tsx
+```
+
 ## Access control (login)
 
 The app is private: every exam route requires a signed-in account, and only the

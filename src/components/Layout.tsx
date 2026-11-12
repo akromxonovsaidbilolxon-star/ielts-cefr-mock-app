@@ -121,6 +121,10 @@ export default function Layout() {
                       Owner panel
                     </Link>
                   )}
+                  <Link to="/multilevel" className="account-menu-item" role="menuitem">
+                    <BookIcon className="" />
+                    Multilevel (CEFR)
+                  </Link>
                   <Link to="/progress" className="account-menu-item" role="menuitem">
                     <ChartIcon className="" />
                     My progress

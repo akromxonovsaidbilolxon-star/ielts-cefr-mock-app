@@ -6,6 +6,7 @@ import { clearDraft, loadDraft, newAttempt, saveAttempt, saveDraft } from '../li
 import { storeReview } from '../lib/lastResult';
 import type { Answers } from '../types';
 import AudioPlayer, { Transcript, useSpeechScript } from '../components/AudioPlayer';
+import { audioKeys } from '../lib/audioManifest';
 import { AnswerGrid, ProgressCard, TimerCard } from '../components/ExamShell';
 import { QuestionGroupBlock } from '../components/QuestionBlock';
 import { CheckIcon } from '../components/Icons';
@@ -27,7 +28,7 @@ export default function ListeningExam() {
   answersRef.current = answers;
 
   const activePart = LISTENING_PARTS[part];
-  const speech = useSpeechScript(activePart.script);
+  const speech = useSpeechScript(activePart.script, audioKeys.ielts(activePart.id));
 
   /* ---------------- restore draft ---------------- */
   useEffect(() => {
