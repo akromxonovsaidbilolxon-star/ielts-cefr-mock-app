@@ -35,72 +35,72 @@ const warn = (msg) => {
 const info = (msg) => console.log(`  ${C.dim}·${C.reset} ${msg}`);
 const section = (title) => console.log(`\n${C.bold}${title}${C.reset}`);
 
-/* ---------------- roster ---------------- */
+/* ---------------- supabase config ---------------- */
 
-function readRoster() {
+function readEnv() {
+  const out = {};
   for (const file of ['.env.production', '.env.local', '.env']) {
     if (!existsSync(file)) continue;
     const text = readFileSync(file, 'utf8');
-    const match = text.match(/VITE_ACCESS_ROSTER\s*=\s*(.+)/);
-    if (!match) continue;
-    const value = match[1].trim().replace(/^["']|["']$/g, '');
-    try {
-      const json = value.startsWith('[')
-        ? value
-        : Buffer.from(value, 'base64').toString('utf8');
-      const parsed = JSON.parse(json);
-      if (Array.isArray(parsed)) return { file, users: parsed };
-    } catch {
-      return { file, users: [], error: 'could not decode the value' };
+    for (const line of text.split('\n')) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+      if (!m) continue;
+      const value = m[2].trim().replace(/^["']|["']$/g, '');
+      if (value && !out[m[1]]) out[m[1]] = { value, file };
     }
   }
-  return null;
+  return out;
 }
 
-section('1. Access roster');
-const roster = readRoster();
+const env = readEnv();
+const sbUrl = env.VITE_SUPABASE_URL?.value;
+const sbKey = env.VITE_SUPABASE_ANON_KEY?.value;
 
-if (!roster) {
-  warn('No local roster file found (.env.production).');
-  info('Create one: npm run access:add -- --file .env.production --user owner --password "YourPass1" --role owner');
-  info('Then add the value as the VITE_ACCESS_ROSTER repository secret.');
+section('1. Supabase configuration');
+
+if (!sbUrl || !sbKey) {
+  bad('Supabase is not configured — nobody would be able to sign in.');
+  info('Add these to .env.production (or your host\'s environment settings):');
+  info('  VITE_SUPABASE_URL=https://your-project.supabase.co');
+  info('  VITE_SUPABASE_ANON_KEY=your-anon-key');
+  info('Find both in Supabase → Project Settings → API.');
 } else {
-  ok(`Found ${roster.file} with ${roster.users.length} account(s)`);
-  const owners = roster.users.filter((u) => u.role === 'owner');
-  const active = roster.users.filter((u) => (u.status ?? 'active') === 'active');
-  const missingHash = roster.users.filter((u) => !u.hash || !u.salt);
+  ok(`VITE_SUPABASE_URL found in ${env.VITE_SUPABASE_URL.file}`);
 
-  if (owners.length === 0) {
-    bad('No owner account in the roster — you would not be able to reach the owner panel.');
+  // Shape check only — no network call.
+  if (/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/.test(sbUrl)) {
+    ok('URL looks like a Supabase project');
   } else {
-    ok(`Owner account present: @${owners[0].username}`);
+    warn(`URL does not look like https://<project>.supabase.co — got "${sbUrl}"`);
   }
-  if (active.length === 0) bad('Every account is suspended — nobody could sign in.');
-  else info(`${active.length} active account(s), ${roster.users.length - active.length} blocked`);
-  if (missingHash.length > 0) {
-    bad(`${missingHash.length} account(s) are missing a password hash and can never sign in.`);
-  }
-  for (const user of roster.users) {
-    if (!user.expiresAtISO) continue;
-    if (new Date(user.expiresAtISO).getTime() <= Date.now()) {
-      warn(`@${user.username} expired on ${new Date(user.expiresAtISO).toLocaleDateString()}`);
+
+  // The anon key is a JWT. The service_role key must NEVER be here.
+  try {
+    const payload = JSON.parse(Buffer.from(sbKey.split('.')[1] ?? '', 'base64').toString('utf8'));
+    if (payload.role === 'service_role') {
+      bad('DANGER: VITE_SUPABASE_ANON_KEY holds the SERVICE ROLE key. It grants full database access to anyone who opens the app. Replace it with the anon/public key immediately.');
+    } else if (payload.role === 'anon') {
+      ok('Key is the public anon key (safe to ship)');
+    } else {
+      warn(`Unexpected key role "${payload.role}" — expected "anon".`);
     }
-  }
-  if (roster.users.some((u) => /^(password|12345678|qwerty)/i.test(u.hash ?? ''))) {
-    bad('A password hash looks like a placeholder value.');
+    if (payload.ref && sbUrl && !sbUrl.includes(payload.ref)) {
+      warn('The key and URL appear to belong to different projects.');
+    }
+  } catch {
+    warn('Could not decode the anon key as a JWT — double-check it was pasted completely.');
   }
 }
 
-section('2. Repository secret');
-try {
-  const remote = execSync('git remote get-url origin', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
-  const slug = remote.replace(/\.git$/, '').replace(/^.*[:/]([^/]+\/[^/]+)$/, '$1');
-  info(`Set it at: https://github.com/${slug}/settings/secrets/actions`);
-  info('Name: VITE_ACCESS_ROSTER  ·  value: everything after the "=" in .env.production');
-} catch {
-  info('Could not detect the GitHub repo. Set VITE_ACCESS_ROSTER in your host settings.');
+section('2. Access rules');
+if (existsSync('supabase/setup.sql')) {
+  ok('supabase/setup.sql present — run it once in the Supabase SQL Editor');
+  info('It creates the profiles table, RLS policies and the owner role.');
+} else {
+  warn('supabase/setup.sql is missing.');
 }
-info('The deploy workflow fails on a malformed secret and warns loudly when it is missing.');
+info('Keep public sign-up disabled: Supabase → Authentication → Sign In / Providers.');
+info('Accounts are added by the owner; the app has no self-registration.');
 
 section('3. Build output');
 if (!existsSync('dist/index.html')) {
@@ -112,28 +112,29 @@ if (!existsSync('dist/index.html')) {
   if (js.length === 0) bad('No JavaScript bundle in dist/assets.');
   else ok(`Bundle present (${js.join(', ')})`);
 
-  if (roster && roster.users.length > 0) {
-    const encoded = roster.users.length
-      ? execSync('cat .env.production')
-          .toString()
-          .match(/VITE_ACCESS_ROSTER\s*=\s*(.+)/)?.[1]
-          .trim()
-          .slice(0, 60)
-      : null;
-    if (encoded) {
-      try {
-        const found = execSync(`grep -lF '${encoded}' dist/assets/*.js`, {
-          encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'ignore'],
-        }).trim();
-        if (found) ok('Access roster is baked into the current build — login will be enforced.');
-        else bad('dist/ was built WITHOUT the roster. Rebuild with npm run build before deploying.');
-      } catch {
-        bad('dist/ was built WITHOUT the roster. Rebuild with npm run build before deploying.');
-      }
+  if (sbKey) {
+    try {
+      const found = execSync(`grep -lF '${sbKey.slice(0, 40)}' dist/assets/*.js`, {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+      }).trim();
+      if (found) ok('Supabase credentials are baked into the current build.');
+      else warn('dist/ was built without Supabase credentials. Rebuild before deploying.');
+    } catch {
+      warn('dist/ was built without Supabase credentials. Rebuild before deploying.');
     }
-  } else {
-    warn('No roster to verify — the build would be unlocked.');
+  }
+
+  // Guard against the single worst mistake: leaking the service role key.
+  try {
+    const hit = execSync(
+      `grep -lE 'service_role|SERVICE_ROLE_KEY' dist/assets/*.js 2>/dev/null || true`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] },
+    ).trim();
+    if (hit) bad('A service_role reference appears in the bundle. Remove it — that key bypasses all security.');
+    else ok('No service role key in the bundle');
+  } catch {
+    /* grep absence is fine */
   }
 }
 
@@ -176,7 +177,7 @@ if (existsSync('dist/index.html')) {
 }
 
 section('5. HTTPS check');
-info('Password hashing and the microphone recorder need HTTPS (or localhost).');
+info('Sign-in and the microphone recorder need HTTPS (or localhost).');
 info('GitHub Pages, Netlify, Vercel and Cloudflare Pages all provide it.');
 info('A LAN address like http://192.168.x.x does NOT — iOS disables Web Crypto there.');
 

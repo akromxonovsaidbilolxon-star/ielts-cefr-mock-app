@@ -1,25 +1,24 @@
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { hasStrongCrypto, lockoutRemaining, MAX_FAILED_ATTEMPTS } from '../lib/auth';
-import { LockIcon, EyeIcon, EyeOffIcon, ShieldIcon } from '../components/Icons';
+import { EyeIcon, EyeOffIcon, LockIcon, ShieldIcon } from '../components/Icons';
 
 export default function Login() {
-  const { session, signIn, ready, enforced } = useAuth();
+  const { signIn, ready, user, unconfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const from = (location.state as { from?: string } | null)?.from ?? '/';
 
-  if (ready && session) return <Navigate to={from} replace />;
-
-  const locked = lockoutRemaining(username);
+  if (ready && user) {
+    navigate(from, { replace: true });
+    return null;
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -27,11 +26,11 @@ export default function Login() {
     setError(null);
     setBusy(true);
     try {
-      const result = await signIn(username, password, remember);
+      const result = await signIn(email, password);
       if (result.ok) {
         navigate(from, { replace: true });
       } else {
-        setError(result.error);
+        setError(result.error ?? 'Could not sign in.');
         setPassword('');
       }
     } catch {
@@ -50,41 +49,33 @@ export default function Login() {
           </div>
           <h1>Sign in</h1>
           <p className="muted small">
-            {enforced
-              ? 'This app is private. Use the username and password the owner gave you.'
-              : 'No accounts have been created yet.'}
+            This app is private. Use the email and password the owner set up for you.
           </p>
         </div>
 
-        {!hasStrongCrypto() && (
-          <div className="callout callout-warn small" style={{ marginBottom: '1rem' }}>
-            <b>Insecure connection.</b> This page is not on HTTPS or localhost, so
-            password hashing is weakened. Open the app over HTTPS for proper
-            security.
-          </div>
-        )}
-
-        {!enforced && (
-          <div className="callout callout-info small" style={{ marginBottom: '1rem' }}>
-            No access roster is configured in this build.{' '}
-            <Link to="/setup">Set up the owner account</Link> to lock the app.
+        {unconfigured && (
+          <div className="callout callout-bad small" style={{ marginBottom: '1rem' }}>
+            <b>Sign-in is not configured.</b> This build has no Supabase
+            credentials, so nobody can sign in. Set{' '}
+            <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>,
+            then rebuild.
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="stack stack-md" noValidate>
           <label className="field">
-            <span className="field-label">Username</span>
+            <span className="field-label">Email</span>
             <input
               className="input"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              inputMode="text"
-              placeholder="your username"
+              inputMode="email"
+              placeholder="you@example.com"
               required
             />
           </label>
@@ -112,37 +103,16 @@ export default function Login() {
             </div>
           </label>
 
-          <div className="row-between">
-            <label className="check-row">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-              />
-              <span className="small">Keep me signed in</span>
-            </label>
-            <span className="tiny faint">
-              {remember ? 'Until I sign out or 12h pass' : 'This session only'}
-            </span>
-          </div>
-
           {error && (
             <div className="callout callout-bad small" role="alert">
               {error}
             </div>
           )}
 
-          {locked > 0 && (
-            <div className="callout callout-warn small">
-              Locked after {MAX_FAILED_ATTEMPTS} failed attempts. Wait {locked} minute
-              {locked === 1 ? '' : 's'} before trying again.
-            </div>
-          )}
-
           <button
             type="submit"
             className="btn btn-lg btn-block"
-            disabled={busy || !username || !password || locked > 0}
+            disabled={busy || !email || !password}
           >
             <LockIcon className="" />
             {busy ? 'Signing in…' : 'Sign in'}
@@ -150,8 +120,8 @@ export default function Login() {
         </form>
 
         <div className="auth-foot tiny faint">
-          Access is limited to accounts created by the app owner. Passwords are
-          never stored in plain text.
+          Accounts are created by the app owner. There is no self-registration.
+          Forgotten your password? Ask the owner to reset it.
         </div>
       </div>
     </div>

@@ -44,7 +44,7 @@ export default function Results() {
   const review = useMemo(() => readReview(), []);
   const writingReport = useMemo<WritingReport | null>(() => {
     try {
-      const raw = sessionStorage.getItem(WRITING_REPORT_KEY);
+      const raw = sessionStorage.getItem(WRITING_REPORT_KEY());
       return raw ? (JSON.parse(raw) as WritingReport) : null;
     } catch {
       return null;

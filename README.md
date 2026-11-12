@@ -44,8 +44,8 @@ npm run typecheck
 - Hand-written CSS design system — no UI framework, no chart library
   (the bar chart and trend chart are plain SVG)
 - Web Speech API for listening audio, MediaRecorder for speaking practice
-- Web Crypto (PBKDF2-SHA256) for password hashing; PWA manifest + icons for
-  home-screen installation
+- Supabase Auth (email + password) with Postgres Row Level Security for access
+  control; PWA manifest + icons for home-screen installation
 
 ## Project layout
 
@@ -58,12 +58,23 @@ src/
     speaking.ts     3 parts + cue card
   lib/
     scoring.ts      band tables, CEFR mapping, answer matching, writing feedback
-    storage.ts      localStorage history + draft checkpoints
+    storage.ts      localStorage history + draft checkpoints (per-user)
     lastResult.ts   sessionStorage reviewers for the results page
-  components/       Layout, QuestionBlock, AudioPlayer, BarChart, ExamShell, Icons
-  pages/            Home, ListeningExam, ReadingExam, WritingExam, SpeakingExam,
-                    Results, Progress, NotFound
+    supabase.ts     Supabase client + profile queries
+    currentUser.ts  tracks who is signed in so storage keys are namespaced
+    voices.ts       ranks installed voices so audio is not robotic
+    audioManifest.ts  registers real recordings, falls back to speech
+  auth/             AuthProvider (Supabase session) + route guards
+  components/       Layout, QuestionBlock, AudioPlayer, BarChart, ExamShell, Icons,
+                    StorageMigration
+  pages/            Home, Login, Admin, ListeningExam, ReadingExam, WritingExam,
+                    SpeakingExam, Results, Progress, NotFound
   hooks/            useCountdown
+supabase/
+  setup.sql         tables, RLS policies, owner role, auto-profile trigger
+scripts/
+  preflight.mjs     checks credentials, build output and mobile assets
+  audio-manifest.mjs  scans public/audio/ and regenerates the manifest
 ```
 
 ## How marking works
@@ -181,84 +192,114 @@ src/pages/
 
 ## Access control (login)
 
-The app is private: every exam route requires a signed-in account, and only the
-**owner** can create accounts, block people, set expiry dates and read the
-activity log.
+The app is private. Every exam route requires a signed-in account, and only the
+**owner** can add, suspend or promote people. Accounts live in **Supabase Auth**,
+so changes apply to every phone and computer immediately — no rebuild, no
+redeploy.
 
 ### How it works
 
 ```
-Sign-in  →  PBKDF2-SHA256 (210k iterations)  →  session (12h, 60m idle timeout)
+Browser  →  Supabase Auth (email + password)  →  JWT
+             ↓
+      profiles table  (role: owner | student, status: active | suspended)
+             ↓
+      Row Level Security — checked by Postgres on every query
 ```
 
-- Passwords are **never stored in plain text** — only a per-user random salt and
-  a PBKDF2 hash.
-- Failed attempts are throttled: 5 wrong passwords locks that username for
-  5 minutes.
-- Accounts can be suspended or given an expiry date.
-- Every sign-in, failure and block is written to an on-device activity log.
+Three things enforce this, in order of importance:
 
-### Step 1 — create the owner account
+1. **Row Level Security (RLS)** in Postgres. This is the real boundary. Even
+   someone who reverse-engineers the JavaScript bundle cannot read other
+   accounts or change their own role.
+2. **`profiles` rows are never created from the browser.** New rows appear via a
+   trigger when the owner adds a user. There is no INSERT policy, so a visitor
+   cannot create an account for themselves.
+3. **The UI** hides owner-only screens. Convenience, not security.
 
-Open `/#/setup` on the deployed app (or locally), choose a username and password.
-This creates the owner and unlocks the **Owner panel** at `/#/admin`.
+### What the owner can do
 
-### Step 2 — publish the rules so they apply on every device
+| Action | Where | Effect |
+|---|---|---|
+| Add someone | Supabase → Authentication → Users | Account is created, they can sign in |
+| Reset a password | Supabase → Authentication → Users | They sign in with the new one |
+| Suspend / reactivate | App → Owner panel → People | Instantly blocked or restored |
+| Promote to owner | App → Owner panel → People | Full admin rights — trust carefully |
+| Delete permanently | Supabase → Authentication → Users | Profile is removed automatically |
 
-The account from Step 1 lives in that browser only. To enforce access on every
-phone and computer, the roster must be **baked into the build**:
+Suspending does **not** delete their results — those live on their own device.
 
-1. Open **Owner panel → Publish access rules** and copy the generated line.
-2. Create `.env.production` in the project root and paste it in:
-   ```
-   VITE_ACCESS_ROSTER=<long base64 string>
-   ```
-3. Rebuild and redeploy (`npm run build`, or push to trigger the Pages workflow).
+### One-time setup
 
-Once a roster is baked in, the app shows *"This app is private"* and the owner
-panel reports the rules as published. From that point the roster can only be
-changed by editing the deployment — which is exactly what makes you the only
-person who decides who gets in.
+**1. Create the Supabase project**
 
-### Managing people from the terminal
+Go to [supabase.com](https://supabase.com) → **New project**. Free tier covers
+50,000 monthly users, which is far more than a classroom needs.
+
+**2. Run the database setup**
+
+Open **SQL Editor** → **New query** → paste the contents of
+[`supabase/setup.sql`](supabase/setup.sql) → **Run**.
+
+This creates the `profiles` table, the RLS policies, `is_owner()`, and the
+trigger that creates a profile whenever you add a user. It is safe to re-run.
+
+**3. Make yourself the owner**
+
+Replace the email with your own and run it in the SQL Editor:
+
+```sql
+update public.profiles set role = 'owner' where email = 'you@example.com';
+```
+
+Do this **before** adding a second person, or you will have no admin access.
+
+**4. Create the first account**
+
+**Authentication → Users → Add user → Create new user**. Enter the email and a
+password, and tick **Auto Confirm User** so they can sign in immediately.
+
+**5. Turn off public sign-up**
+
+**Authentication → Sign In / Providers** → disable **Allow new users to sign
+up**. Without this, anyone who finds your project URL could register their own
+account. Hiding the button in the app is not enough — the API stays open.
+
+**6. Give the app its credentials**
+
+**Project Settings → API**, copy the **Project URL** and the **anon / public
+key**. Put them in `.env.production`:
 
 ```bash
-npm run access:list -- --file .env.production
-npm run access:add  -- --file .env.production --user mariam --name "Mariam T" --password "Temp1234"
-npm run access:hash -- --password "NewPass123"      # for a manual edit
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 ```
 
-Editing an existing username rewrites that person's password. Then rebuild and
-redeploy for the change to take effect.
+Then `npm run build`. `npm run preflight` verifies both are present and that you
+have not accidentally pasted the service role key.
 
-### Security limits — read this
+### Which key goes where
 
-This is a **static site**, so the access check runs in the visitor's browser.
-A determined person can inspect the JavaScript and bypass the login screen. The
-roster is a strong door lock, not a vault:
+| Key | Safe in the browser? | Use |
+|---|---|---|
+| **anon / public** | ✅ Yes — this is its purpose | `VITE_SUPABASE_ANON_KEY` |
+| **service_role** | ❌ **Never** — bypasses every RLS policy | Supabase dashboard only |
 
-| Threat | Protected? |
-| --- | --- |
-| Someone opening the link without credentials | ✅ Yes |
-| Casual sharing of the URL | ✅ Yes |
-| Password reuse leaking your users' passwords | ✅ Yes — only hashes leave the server |
-| Someone reading the JS bundle to find the content | ❌ No |
-| A targeted attacker who knows web development | ❌ No |
+`preflight` and the GitHub Actions workflow both **refuse to publish** if the
+service role key is detected in the bundle. That mistake would give anyone who
+opens the app full read/write access to your database.
 
-Use it to control a class, a study group or a client — **not** for confidential
-material. The README section below explains how to make it genuinely private.
+### A note on what this protects
 
-### Locking it down properly
+Because this is a static app with no backend, a determined person who extracts
+the anon key could still read the *public* parts of your Supabase project. What
+they cannot do is see other people's accounts, change roles, or create users —
+RLS blocks all of it at the database, not in the browser.
 
-If you need real enforcement, put the app behind something that checks requests
-on a server. All work without changing any app code:
+For a classroom this is more than sufficient. If you later need stronger
+guarantees, add rate limiting and Turnstile/bot protection in Supabase
+(**Authentication → Attack Protection**).
 
-- **Cloudflare Access** (free for up to 50 users) — email one-time-PIN login in
-  front of the Pages deployment. This is the best option for a real classroom.
-- **Netlify Identity / password protection** on paid plans.
-- **Vercel password protection** on Pro.
-- A tiny Express/Fastify proxy that checks a session cookie before serving
-  `dist/`.
 
 ## Mobile app (Android & iOS)
 
@@ -304,101 +345,52 @@ users keep a stale build. Say the word and it can be added.
 The repo ships a workflow at `.github/workflows/deploy.yml` that type-checks,
 builds and publishes `dist/` to GitHub Pages on every push to `main`.
 
-### ⚠️ Order matters
+### ⚠️ Set the secrets first
 
-The deployed build **must** contain your access roster, otherwise the app
-launches unlocked and asks the first visitor to become the owner. So set the
-secret **before** you merge to `main`.
+The workflow **refuses to deploy** without Supabase credentials, because a build
+without them cannot sign anybody in.
 
 ### Steps
 
-**1. Create your owner account locally**
+**1. Add the repository secrets**
+
+On GitHub: **Settings → Secrets and variables → Actions → New repository
+secret**. Add both:
+
+| Name | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | `https://your-project.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | the **anon / public** key |
+
+> The anon key is meant to be public. It is *not* a secret in the security
+> sense — RLS is what protects your data. Never put the **service_role** key
+> here; the workflow rejects the build if it detects it.
+
+**2. Enable GitHub Pages once**
+
+**Settings → Pages → Source: GitHub Actions**. (This cannot be automated from a
+workflow — GitHub requires a human to enable it the first time.)
+
+**3. Push to `main`**
 
 ```bash
-npm run access:add -- --file .env.production --user owner --name "Your Name" \
-  --password "YourStrongPass1" --role owner
+git push origin main
 ```
 
-Add everyone else the same way (omit `--role owner`):
+The workflow verifies the credentials, builds, checks the key is baked into the
+bundle, and deploys. Results appear under **Actions**.
 
-```bash
-npm run access:add -- --file .env.production --user mariam --name "Mariam T" \
-  --password "Temp1234" --expires 2026-12-31
-```
+### If the site says "Sign-in is not configured"
 
-Check the result:
+The build did not receive the credentials. Check that both secrets exist and
+that you built *after* adding them.
 
-```bash
-npm run access:list -- --file .env.production
-```
+### If you see "Set up owner access"
 
-**2. Store the roster as a repository secret**
+That screen belonged to the old build-time roster and no longer exists. A page
+still showing it is a stale deployment — force a fresh deploy, then hard-refresh
+(Ctrl/Cmd+Shift+R).
 
-Copy the single line inside `.env.production` (it starts with
-`VITE_ACCESS_ROSTER=`) and paste **only the value** — everything after the `=`
-— into:
-
-> GitHub → **Settings → Secrets and variables → Actions → New repository secret**
-> Name: `VITE_ACCESS_ROSTER`
-
-The workflow reads it and builds a protected bundle. If the secret is missing
-the deploy still runs but prints a loud **“Deploying UNLOCKED build”** warning;
-if the secret is malformed the job **fails** instead of publishing.
-
-**3. Enable Pages**
-
-> **Settings → Pages → Build and deployment → Source → GitHub Actions**
-
-**4. Merge to `main`**
-
-The workflow deploys. Your site is then live at:
-
-```
-https://<your-username>.github.io/ielts-cefr-mock-app/
-```
-
-You can also trigger it manually from **Actions → Deploy to GitHub Pages → Run
-workflow** and pick a branch.
-
-**5. Verify**
-
-Open the URL. You should see the sign-in screen with *“This app is private.”*
-If you see *“Set up owner access”* instead, the secret did not load — check the
-action log for the unlock warning.
-
-> `base: './'` in `vite.config.ts` means the same build works at `/`, at
-> `/ielts-cefr-mock-app/`, or on any other static host with no changes.
-
-### Updating access later
-
-1. `npm run access:add -- --file .env.production --user newperson --password "Temp1234"`
-2. Update the `VITE_ACCESS_ROSTER` secret with the new value.
-3. Re-run the workflow (or push any commit to `main`).
-
-Removing a person works the same way: delete their entry, or set
-`"status": "suspended"`.
-
-### Other hosting options
-
-Everything is static, so any host works — build with `npm run build` and serve
-`dist/`. All of these let you set `VITE_ACCESS_ROSTER` as an environment
-variable:
-
-| Host | Build command | Publish directory | Env var location |
-| --- | --- | --- | --- |
-| **Netlify** | `npm run build` | `dist` | Site settings → Environment variables |
-| **Vercel** | `npm run build` | `dist` | Settings → Environment Variables |
-| **Cloudflare Pages** | `npm run build` | `dist` | Settings → Variables and Secrets |
-
-Quickest possible demo (no account):
-
-```bash
-npm run build
-# drag the dist/ folder onto https://app.netlify.com/drop
-```
-
-Without the env var that build is unlocked — fine for a private demo, not for
-sharing.
 
 ## Sharing it with mobile devices
 
@@ -456,17 +448,24 @@ Or paste the URL into any online QR generator and project it on screen.
 
 ### Sharing with several people
 
-1. Add each person with `npm run access:add`.
-2. Publish the updated roster (step 2 above).
-3. Send each person the URL plus **their own** username and temporary password.
+1. Add each person in **Supabase → Authentication → Users → Add user**
+   (tick **Auto Confirm User**).
+2. Send each person the URL plus **their own** email and password.
 
-Everyone gets separate credentials, so you can revoke one person without
-affecting the others, and the activity log shows who signed in.
+Everyone gets separate credentials, so you can suspend one person without
+affecting the others. The Owner panel lists everyone and their status.
 
 ### Sharing safely — read this
 
-The login screen stops people who do not have an account, but because the app is
-static the check runs in their browser and a determined visitor can bypass it.
+The login screen stops people who do not have an account. Because this is a
+static app, the *interface* runs in the browser — but the data is protected by
+Row Level Security in Postgres, so a visitor who tampers with the page still
+cannot read other accounts or grant themselves a role.
+
+What RLS does **not** hide is that a Supabase project exists, nor the public
+anon key. Neither grants access to anything you have not allowed by policy —
+but do not store anything confidential in a table without a policy that
+restricts it.
 For a classroom or study group that is fine. If the content is confidential, put
 the deployment behind **Cloudflare Access** (free up to 50 users) or Netlify
 password protection — see *Locking it down properly* above. Those options add a

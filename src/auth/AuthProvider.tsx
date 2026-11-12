@@ -4,192 +4,190 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import type { Session as SupabaseSession } from '@supabase/supabase-js';
 import {
-  clearSession,
-  isEnforced,
-  logEvent,
-  readSession,
-  saveSession,
-  sessionIsStale,
-  signIn as authSignIn,
-  signOut as authSignOut,
-  touchSession,
-  type LoginResult,
-  type Session,
-} from '../lib/auth';
+  fetchProfile,
+  getSupabase,
+  isConfigured,
+  type Profile,
+  type Role,
+} from '../lib/supabase';
+import { setCurrentUserId } from '../lib/currentUser';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: Role;
+  status: 'active' | 'suspended';
+}
+
+export interface LoginResult {
+  ok: boolean;
+  error?: string;
+}
 
 interface AuthContextValue {
-  session: Session | null;
+  user: AuthUser | null;
   ready: boolean;
-  /** True when the deployed build carries a roster (cannot be edited locally). */
-  enforced: boolean;
-  /** True when no roster exists yet, so the first visitor sets up the owner. */
-  needsSetup: boolean;
-  signIn: (username: string, password: string, remember: boolean) => Promise<LoginResult>;
-  signOut: () => void;
-  /** Called after the owner is created during first-run setup. */
-  adoptSession: (session: Session) => void;
-  /** Persist a session and mark the app as enforced (after owner creation). */
-  enforceSetup: (session: Session) => void;
-  refreshEnforcement: () => void;
+  /** True when the build has no Supabase credentials — the app cannot lock. */
+  unconfigured: boolean;
+  signIn: (email: string, password: string) => Promise<LoginResult>;
+  signOut: () => Promise<void>;
+  /** Re-reads the profile (used after an owner edits their own account). */
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'focus'] as const;
+function toAuthUser(profile: Profile): AuthUser {
+  return {
+    id: profile.id,
+    email: profile.email,
+    displayName: profile.displayName,
+    role: profile.role,
+    status: profile.status,
+  };
+}
+
+/** Friendly text for the errors Supabase actually returns. */
+function explain(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('invalid login credentials')) return 'That email or password is not correct.';
+  if (m.includes('email not confirmed')) return 'Please confirm your email address first — check your inbox.';
+  if (m.includes('failed to fetch') || m.includes('network')) {
+    return 'Could not reach the server. Check your internet connection and try again.';
+  }
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'Too many attempts. Please wait a minute and try again.';
+  }
+  return message;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [ready, setReady] = useState(false);
-  const [enforced, setEnforced] = useState(false);
-  const [rosterVersion, setRosterVersion] = useState(0);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [ready, setReady] = useState(!isConfigured);
+  const readyRef = useRef(false);
 
-  /* ---------------- initial load ---------------- */
+  /**
+   * Load the profile for a session.
+   *
+   * A signed-in user with no profile row is NOT admitted: without a profile the
+   * owner cannot see or control them, so they are signed straight back out.
+   */
+  const applySession = useCallback(async (session: SupabaseSession | null) => {
+    if (!session) {
+      setCurrentUserId(null);
+      setUser(null);
+      readyRef.current = true;
+      setReady(true);
+      return;
+    }
+
+    try {
+      const profile = await fetchProfile(session.user.id);
+      if (!profile) {
+        await getSupabase().auth.signOut();
+        setCurrentUserId(null);
+        setUser(null);
+      } else if (profile.status === 'suspended') {
+        await getSupabase().auth.signOut();
+        setCurrentUserId(null);
+        setUser(null);
+      } else {
+        setCurrentUserId(profile.id);
+        setUser(toAuthUser(profile));
+      }
+    } catch {
+      // Network/RLS failure: do not admit, but do not destroy the session either
+      // so a temporary outage does not sign everyone out permanently.
+      setCurrentUserId(null);
+      setUser(null);
+    } finally {
+      readyRef.current = true;
+      setReady(true);
+    }
+  }, []);
+
   useEffect(() => {
-    let cancelled = false;
+    if (!isConfigured) return;
 
-    const boot = async () => {
-      const stored = readSession();
-      if (stored && sessionIsStale(stored)) {
-        clearSession();
-        logEvent(stored.username, 'session.expired');
-        if (!cancelled) {
-          setSession(null);
-          setEnforced(isEnforced());
-          setReady(true);
-        }
+    let cancelled = false;
+    const supabase = getSupabase();
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!cancelled) void applySession(data.session);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (event === 'SIGNED_OUT') {
+        setCurrentUserId(null);
+        setUser(null);
+        readyRef.current = true;
+        setReady(true);
         return;
       }
-      if (!cancelled) {
-        setSession(stored ?? null);
-        setEnforced(isEnforced());
-        setReady(true);
-      }
-    };
+      void applySession(session);
+    });
 
-    void boot();
     return () => {
       cancelled = true;
+      sub.subscription.unsubscribe();
     };
-  }, [rosterVersion]);
+  }, [applySession]);
 
-  /* ---------------- idle / absolute expiry guard ---------------- */
-  useEffect(() => {
-    if (!session) return;
-
-    const check = () => {
-      const current = readSession();
-      if (!current || sessionIsStale(current)) {
-        clearSession();
-        logEvent(session.username, 'session.expired', 'timed out');
-        setSession(null);
-      }
-    };
-
-    // Re-evaluate on a slow tick and whenever the tab regains focus.
-    const interval = window.setInterval(check, 30_000);
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') check();
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', check);
-
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', check);
-    };
-  }, [session]);
-
-  /* ---------------- idle activity tracking ---------------- */
-  useEffect(() => {
-    if (!session) return;
-
-    let lastWrite = 0;
-    const onActivity = () => {
-      const now = Date.now();
-      // Throttle writes so pointer/key events cannot hammer storage.
-      if (now - lastWrite < 15_000) return;
-      lastWrite = now;
-      const current = readSession();
-      if (!current) return;
-      const touched = touchSession(current);
-      setSession((prev) =>
-        prev && prev.lastSeenISO !== touched.lastSeenISO
-          ? { ...prev, lastSeenISO: touched.lastSeenISO }
-          : prev,
-      );
-    };
-
-    for (const event of ACTIVITY_EVENTS) {
-      window.addEventListener(event, onActivity, { passive: true });
+  const signIn = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    if (!isConfigured) {
+      return { ok: false, error: 'This build is not configured for sign-in yet.' };
     }
-    return () => {
-      for (const event of ACTIVITY_EVENTS) {
-        window.removeEventListener(event, onActivity);
-      }
-    };
-  }, [session]);
+    const { data, error } = await getSupabase().auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
-  /* ---------------- cross-tab sync ---------------- */
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key && event.key.includes('ielts-mock:auth:session')) {
-        const current = readSession();
-        setSession(current && !sessionIsStale(current) ? current : null);
-      }
-      if (event.key && event.key.includes('ielts-mock:auth:local-roster')) {
-        setRosterVersion((v) => v + 1);
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    if (error) return { ok: false, error: explain(error.message) };
+    if (!data.session) return { ok: false, error: 'Sign-in did not return a session. Try again.' };
+
+    // Confirm the account is actually provisioned before letting them in.
+    const profile = await fetchProfile(data.session.user.id);
+    if (!profile) {
+      await getSupabase().auth.signOut();
+      return {
+        ok: false,
+        error: 'This account has not been set up by the owner yet. Ask them to add you.',
+      };
+    }
+    if (profile.status === 'suspended') {
+      await getSupabase().auth.signOut();
+      return { ok: false, error: 'This account is suspended. Contact the owner.' };
+    }
+
+    setCurrentUserId(profile.id);
+    setUser(toAuthUser(profile));
+    setReady(true);
+    return { ok: true };
   }, []);
 
-  const signIn = useCallback(async (username: string, password: string, remember: boolean) => {
-    const result = await authSignIn(username, password, remember);
-    if (result.ok) setSession(result.session);
-    return result;
+  const signOut = useCallback(async () => {
+    if (isConfigured) await getSupabase().auth.signOut();
+    setCurrentUserId(null);
+    setUser(null);
   }, []);
 
-  const signOut = useCallback(() => {
-    authSignOut(session);
-    setSession(null);
-  }, [session]);
-
-  const adoptSession = useCallback((next: Session) => {
-    saveSession(next);
-    setSession(next);
-  }, []);
-
-  const refreshEnforcement = useCallback(() => {
-    setEnforced(isEnforced());
-    setRosterVersion((v) => v + 1);
-  }, []);
-
-  const enforceSetup = useCallback((next: Session) => {
-    // The owner just created the first account, so the app is now locked.
-    saveSession(next);
-    setSession(next);
-    setEnforced(true);
-  }, []);
+  const refreshUser = useCallback(async () => {
+    if (!isConfigured) return;
+    const { data } = await getSupabase().auth.getSession();
+    await applySession(data.session);
+  }, [applySession]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({
-      session,
-      ready,
-      enforced,
-      needsSetup: !enforced && !session,
-      signIn,
-      signOut,
-      adoptSession,
-      enforceSetup,
-      refreshEnforcement,
-    }),
-    [session, ready, enforced, signIn, signOut, adoptSession, enforceSetup, refreshEnforcement],
+    () => ({ user, ready, unconfigured: !isConfigured, signIn, signOut, refreshUser }),
+    [user, ready, signIn, signOut, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -199,10 +197,4 @@ export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
   return ctx;
-}
-
-/** Convenience guard: redirects callers to /login when signed out. */
-export function useRequireAuth(): { session: Session; ready: boolean } {
-  const { session, ready } = useAuth();
-  return { session: session as Session, ready };
 }

@@ -24,7 +24,7 @@ const NAV = [
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { session, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isExam = /^\/(listening|reading|writing|speaking)/.test(location.pathname);
@@ -44,7 +44,7 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
-  const initials = (session?.displayName ?? '?')
+  const initials = (user?.displayName ?? '?')
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
@@ -86,7 +86,7 @@ export default function Layout() {
               aria-label="Account menu"
             >
               <span className="avatar">{initials || '?'}</span>
-              <span className="account-name">{session?.displayName}</span>
+              <span className="account-name">{user?.displayName}</span>
               <svg
                 className={`chevron${menuOpen ? ' open' : ''}`}
                 viewBox="0 0 24 24"
@@ -108,14 +108,14 @@ export default function Layout() {
                 />
                 <div className="account-menu" role="menu">
                   <div className="account-menu-head">
-                    <div className="strong">{session?.displayName}</div>
-                    <div className="tiny faint">@{session?.username}</div>
+                    <div className="strong">{user?.displayName}</div>
+                    <div className="tiny faint">{user?.email}</div>
                     <span className="badge badge-brand" style={{ marginTop: '0.35rem' }}>
-                      {session?.role === 'owner' ? 'Owner' : 'Member'}
+                      {user?.role === 'owner' ? 'Owner' : 'Member'}
                     </span>
                   </div>
                   <div className="divider" />
-                  {session?.role === 'owner' && (
+                  {user?.role === 'owner' && (
                     <Link to="/admin" className="account-menu-item" role="menuitem">
                       <ShieldIcon className="" />
                       Owner panel
@@ -134,7 +134,7 @@ export default function Layout() {
                     className="account-menu-item danger"
                     role="menuitem"
                     onClick={() => {
-                      signOut();
+                      void signOut();
                       navigate('/login', { replace: true });
                     }}
                   >
