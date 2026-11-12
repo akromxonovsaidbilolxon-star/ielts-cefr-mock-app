@@ -200,49 +200,176 @@ users keep a stale build. Say the word and it can be added.
 
 ## Publishing (GitHub Pages)
 
-A deployment workflow is included at `.github/workflows/deploy.yml`. It builds the
-app, type-checks it and publishes `dist/` to GitHub Pages on every push to `main`.
+The repo ships a workflow at `.github/workflows/deploy.yml` that type-checks,
+builds and publishes `dist/` to GitHub Pages on every push to `main`.
 
-### One-time setup (needs repo admin — do this in the browser)
+### ⚠️ Order matters
 
-1. Open **Settings → Pages** in the repository.
-2. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Push to `main` (or run the workflow manually from the **Actions** tab).
+The deployed build **must** contain your access roster, otherwise the app
+launches unlocked and asks the first visitor to become the owner. So set the
+secret **before** you merge to `main`.
 
-The site appears at:
+### Steps
+
+**1. Create your owner account locally**
+
+```bash
+npm run access:add -- --file .env.production --user owner --name "Your Name" \
+  --password "YourStrongPass1" --role owner
+```
+
+Add everyone else the same way (omit `--role owner`):
+
+```bash
+npm run access:add -- --file .env.production --user mariam --name "Mariam T" \
+  --password "Temp1234" --expires 2026-12-31
+```
+
+Check the result:
+
+```bash
+npm run access:list -- --file .env.production
+```
+
+**2. Store the roster as a repository secret**
+
+Copy the single line inside `.env.production` (it starts with
+`VITE_ACCESS_ROSTER=`) and paste **only the value** — everything after the `=`
+— into:
+
+> GitHub → **Settings → Secrets and variables → Actions → New repository secret**
+> Name: `VITE_ACCESS_ROSTER`
+
+The workflow reads it and builds a protected bundle. If the secret is missing
+the deploy still runs but prints a loud **“Deploying UNLOCKED build”** warning;
+if the secret is malformed the job **fails** instead of publishing.
+
+**3. Enable Pages**
+
+> **Settings → Pages → Build and deployment → Source → GitHub Actions**
+
+**4. Merge to `main`**
+
+The workflow deploys. Your site is then live at:
 
 ```
 https://<your-username>.github.io/ielts-cefr-mock-app/
 ```
 
-No extra configuration is needed for the subpath: `vite.config.ts` sets
-`base: './'`, so the same build works at `/`, at `/ielts-cefr-mock-app/`, or from
-any other static host.
+You can also trigger it manually from **Actions → Deploy to GitHub Pages → Run
+workflow** and pick a branch.
 
-> **Note:** the workflow runs on pushes to `main`. If your work is on a feature
-> branch, merge it into `main` first, otherwise no deployment is triggered.
+**5. Verify**
+
+Open the URL. You should see the sign-in screen with *“This app is private.”*
+If you see *“Set up owner access”* instead, the secret did not load — check the
+action log for the unlock warning.
+
+> `base: './'` in `vite.config.ts` means the same build works at `/`, at
+> `/ielts-cefr-mock-app/`, or on any other static host with no changes.
+
+### Updating access later
+
+1. `npm run access:add -- --file .env.production --user newperson --password "Temp1234"`
+2. Update the `VITE_ACCESS_ROSTER` secret with the new value.
+3. Re-run the workflow (or push any commit to `main`).
+
+Removing a person works the same way: delete their entry, or set
+`"status": "suspended"`.
 
 ### Other hosting options
 
-Because the whole app is static, any static host works — the only requirement is
-that you run `npm run build` and serve the `dist/` folder.
+Everything is static, so any host works — build with `npm run build` and serve
+`dist/`. All of these let you set `VITE_ACCESS_ROSTER` as an environment
+variable:
 
-| Host | Publish step | Notes |
-| --- | --- | --- |
-| **Netlify** | Build command `npm run build`, publish directory `dist` | Free, custom domain, auto-deploys from Git |
-| **Vercel** | Framework preset **Vite**, output `dist` | Same idea as Netlify |
-| **Cloudflare Pages** | Build command `npm run build`, output `dist` | Generous free tier |
-| **GitHub Pages** | See above | Free, URL tied to the repo |
+| Host | Build command | Publish directory | Env var location |
+| --- | --- | --- | --- |
+| **Netlify** | `npm run build` | `dist` | Site settings → Environment variables |
+| **Vercel** | `npm run build` | `dist` | Settings → Environment Variables |
+| **Cloudflare Pages** | `npm run build` | `dist` | Settings → Variables and Secrets |
 
-Simplest manual option — build locally and drag-drop the folder:
+Quickest possible demo (no account):
 
 ```bash
 npm run build
-# then drag the generated dist/ folder onto https://app.netlify.com/drop
+# drag the dist/ folder onto https://app.netlify.com/drop
 ```
 
-Because routing uses `HashRouter` (`/#/reading`), no server-side rewrite rules are
-required on any host — deep links work out of the box.
+Without the env var that build is unlocked — fine for a private demo, not for
+sharing.
+
+## Sharing it with mobile devices
+
+### Option A — Install as an app (recommended)
+
+Once deployed, the URL is a **Progressive Web App**. Send people the link; once
+they open it they can install it to their home screen:
+
+**Android (Chrome / Edge)**
+1. Open the link.
+2. Tap the **⋮** menu → **Install app** (or **Add to Home screen**).
+3. Confirm. An “IELTS Mock” icon appears in the app drawer, opening full-screen
+   with no browser bars.
+
+**iPhone / iPad (Safari — required)**
+1. Open the link in **Safari** (Chrome on iOS cannot install PWAs).
+2. Tap the **Share** button (square with an arrow).
+3. Scroll and tap **Add to Home Screen** → **Add**.
+4. Launch it from the home screen. It runs full-screen with a translucent status
+   bar, matching the native look.
+
+> **Important for iPhones:** the microphone-based Speaking recorder and password
+> hashing both need a **secure context**. GitHub Pages, Netlify, Vercel and
+> Cloudflare all serve HTTPS, so they work. A plain `http://192.168.x.x` address
+> on your local network does **not** — see the caveat below.
+
+### Option B — Share over the local network (no deploy at all)
+
+Useful for testing on your own phone before publishing:
+
+```bash
+npm run dev
+```
+
+Vite prints a **Network** address, e.g. `http://192.168.1.42:5173`. Make sure the
+phone is on the same Wi-Fi, then open that address.
+
+**Two limitations on plain HTTP:**
+- **iOS:** Safari will not install the PWA and Web Crypto is unavailable, so
+  password hashing falls back to a weak mode (the app shows a warning banner).
+- **Android:** installing from the menu is also restricted without HTTPS.
+
+For anything beyond a quick check, deploy to HTTPS.
+
+### Option C — Share with a QR code
+
+Easiest way to get a link onto a phone in a classroom:
+
+```bash
+# prints a scannable QR code in the terminal
+npx qrcode-terminal "https://your-name.github.io/ielts-cefr-mock-app/"
+```
+
+Or paste the URL into any online QR generator and project it on screen.
+
+### Sharing with several people
+
+1. Add each person with `npm run access:add`.
+2. Publish the updated roster (step 2 above).
+3. Send each person the URL plus **their own** username and temporary password.
+
+Everyone gets separate credentials, so you can revoke one person without
+affecting the others, and the activity log shows who signed in.
+
+### Sharing safely — read this
+
+The login screen stops people who do not have an account, but because the app is
+static the check runs in their browser and a determined visitor can bypass it.
+For a classroom or study group that is fine. If the content is confidential, put
+the deployment behind **Cloudflare Access** (free up to 50 users) or Netlify
+password protection — see *Locking it down properly* above. Those options add a
+real server-side check without changing any app code.
 
 ## Accuracy note
 

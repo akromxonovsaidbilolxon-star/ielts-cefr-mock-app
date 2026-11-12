@@ -12,7 +12,8 @@
     "access:hash": "node scripts/access.mjs hash",
     "access:new": "node scripts/access.mjs new",
     "access:add": "node scripts/access.mjs add",
-    "access:list": "node scripts/access.mjs list"
+    "access:list": "node scripts/access.mjs list",
+    "preflight": "node scripts/preflight.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

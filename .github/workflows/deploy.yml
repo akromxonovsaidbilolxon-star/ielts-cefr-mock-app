@@ -7,13 +7,11 @@ on:
       - arena/964ca4d5-ielts-cefr-mock-app
   workflow_dispatch:
 
-# Allow the workflow to publish to Pages via OIDC.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Only one deployment at a time; do not cancel a run mid-publish.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -37,8 +35,54 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
+      # The access roster is injected from a repository secret so the built
+      # bundle enforces login. It must be supplied this way: .env.production is
+      # gitignored and never checked in.
+      - name: Configure access roster
+        env:
+          ROSTER: ${{ secrets.VITE_ACCESS_ROSTER }}
+        run: |
+          if [ -z "$ROSTER" ]; then
+            echo "::warning title=App will be UNLOCKED::No VITE_ACCESS_ROSTER secret is set. The deployed app will ask the first visitor to create an owner account instead of enforcing your roster."
+            echo "ACCESS_ENFORCED=false" >> "$GITHUB_ENV"
+          else
+            # Guard against a malformed secret: it must decode to a JSON array
+            # containing at least one user with a username and hash.
+            if ! printf '%s' "$ROSTER" | base64 -d 2>/dev/null \
+                | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s);if(!Array.isArray(a)||a.length===0)process.exit(1);if(!a.every(u=>u&&u.username&&u.hash&&u.salt))process.exit(1)})'; then
+              echo "::error title=Invalid roster secret::VITE_ACCESS_ROSTER does not decode to a valid user array. Refusing to deploy."
+              exit 1
+            fi
+            echo "ACCESS_ENFORCED=true" >> "$GITHUB_ENV"
+            echo "::notice title=Access enforced::Roster loaded from secrets.VITE_ACCESS_ROSTER."
+          fi
+
       - name: Build
         run: npm run build
+        env:
+          VITE_ACCESS_ROSTER: ${{ secrets.VITE_ACCESS_ROSTER }}
+
+      # Fail loudly rather than silently publishing an unprotected app.
+      - name: Verify login is baked into the build
+        env:
+          ROSTER: ${{ secrets.VITE_ACCESS_ROSTER }}
+        run: |
+          if [ "$ACCESS_ENFORCED" = "true" ]; then
+            # Check for the roster value itself. Testing the variable name is
+            # useless: the bundle legitimately contains "VITE_ACCESS_ROSTER" as
+            # the admin panel's own export label. The salt is nested inside the
+            # base64 blob, so compare a distinctive slice of the encoded roster
+            # (long enough to be unique, near the start to avoid truncation).
+            SLICE=$(printf '%s' "$ROSTER" | cut -c1-60)
+            if grep -qF "$SLICE" ./dist/assets/*.js 2>/dev/null; then
+              echo "✔ Access roster is baked into the bundle."
+            else
+              echo "::error title=Build is not protected::The roster is absent from the built JavaScript, so login would not be enforced."
+              exit 1
+            fi
+          else
+            echo "::warning title=Deploying UNLOCKED build::Set the VITE_ACCESS_ROSTER secret to enforce login."
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
