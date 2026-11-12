@@ -76,6 +76,52 @@ src/
 4. **Overall** — the mean of the skills attempted, rounded to the nearest half band,
    exactly as IELTS rounds an overall score.
 
+## Publishing (GitHub Pages)
+
+A deployment workflow is included at `.github/workflows/deploy.yml`. It builds the
+app, type-checks it and publishes `dist/` to GitHub Pages on every push to `main`.
+
+### One-time setup (needs repo admin — do this in the browser)
+
+1. Open **Settings → Pages** in the repository.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Push to `main` (or run the workflow manually from the **Actions** tab).
+
+The site appears at:
+
+```
+https://<your-username>.github.io/ielts-cefr-mock-app/
+```
+
+No extra configuration is needed for the subpath: `vite.config.ts` sets
+`base: './'`, so the same build works at `/`, at `/ielts-cefr-mock-app/`, or from
+any other static host.
+
+> **Note:** the workflow runs on pushes to `main`. If your work is on a feature
+> branch, merge it into `main` first, otherwise no deployment is triggered.
+
+### Other hosting options
+
+Because the whole app is static, any static host works — the only requirement is
+that you run `npm run build` and serve the `dist/` folder.
+
+| Host | Publish step | Notes |
+| --- | --- | --- |
+| **Netlify** | Build command `npm run build`, publish directory `dist` | Free, custom domain, auto-deploys from Git |
+| **Vercel** | Framework preset **Vite**, output `dist` | Same idea as Netlify |
+| **Cloudflare Pages** | Build command `npm run build`, output `dist` | Generous free tier |
+| **GitHub Pages** | See above | Free, URL tied to the repo |
+
+Simplest manual option — build locally and drag-drop the folder:
+
+```bash
+npm run build
+# then drag the generated dist/ folder onto https://app.netlify.com/drop
+```
+
+Because routing uses `HashRouter` (`/#/reading`), no server-side rewrite rules are
+required on any host — deep links work out of the box.
+
 ## Accuracy note
 
 This is a study tool, not an official test. Listening and Reading bands are
