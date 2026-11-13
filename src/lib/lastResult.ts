@@ -1,15 +1,17 @@
 import type { Answers, Skill } from '../types';
+import { scopedKey } from './currentUser';
 
 export interface StoredReview {
   skill: Skill;
   answers: Answers;
 }
 
-const KEY = 'ielts-mock:review';
+const KEY_BASE = 'ielts-mock:review';
+const KEY = () => scopedKey(KEY_BASE);
 
 export function storeReview(skill: Skill, answers: Answers): void {
   try {
-    sessionStorage.setItem(KEY, JSON.stringify({ skill, answers } satisfies StoredReview));
+    sessionStorage.setItem(KEY(), JSON.stringify({ skill, answers } satisfies StoredReview));
   } catch {
     /* ignore quota errors */
   }
@@ -17,7 +19,7 @@ export function storeReview(skill: Skill, answers: Answers): void {
 
 export function readReview(): StoredReview | null {
   try {
-    const raw = sessionStorage.getItem(KEY);
+    const raw = sessionStorage.getItem(KEY());
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredReview;
     if (!parsed?.skill || !parsed?.answers) return null;
@@ -29,7 +31,7 @@ export function readReview(): StoredReview | null {
 
 export function clearReview(): void {
   try {
-    sessionStorage.removeItem(KEY);
+    sessionStorage.removeItem(KEY());
   } catch {
     /* ignore */
   }
@@ -57,4 +59,5 @@ export interface WritingReport {
   texts: Record<string, string>;
 }
 
-export const WRITING_REPORT_KEY = 'ielts-mock:writing-report';
+const WRITING_REPORT_BASE = 'ielts-mock:writing-report';
+export const WRITING_REPORT_KEY = () => scopedKey(WRITING_REPORT_BASE);

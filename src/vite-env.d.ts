@@ -1,8 +1,10 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Base64 (or raw JSON) array of allowed users. Baked in at build time. */
-  readonly VITE_ACCESS_ROSTER?: string;
+  /** Supabase project URL, e.g. https://abcdefgh.supabase.co */
+  readonly VITE_SUPABASE_URL?: string;
+  /** Supabase anon (public) key. Safe to ship — RLS enforces access. */
+  readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_APP_TITLE?: string;
 }
 

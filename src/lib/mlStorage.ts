@@ -1,9 +1,32 @@
 import type { MlAttempt, MlLevel } from '../content/multilevel/types';
 import { averageScore, scoreToAward } from './multilevel';
+import { scopedKey } from './currentUser';
 
-const HISTORY_KEY = 'ielts-mock:multilevel:history:v1';
-const PRACTICE_KEY = 'ielts-mock:multilevel:practice:v1';
-const DRAFT_KEY = 'ielts-mock:multilevel:draft:v1';
+const HISTORY_BASE = 'ielts-mock:multilevel:history:v1';
+const PRACTICE_BASE = 'ielts-mock:multilevel:practice:v1';
+const DRAFT_BASE = 'ielts-mock:multilevel:draft:v1';
+
+/** Keys are namespaced per signed-in user so a shared phone cannot leak results. */
+const HISTORY_KEY = () => scopedKey(HISTORY_BASE);
+const PRACTICE_KEY = () => scopedKey(PRACTICE_BASE);
+const DRAFT_KEY = () => scopedKey(DRAFT_BASE);
+
+/**
+ * Copy pre-namespacing Multilevel data into this user's namespace, once.
+ * The legacy keys are left in place so the migration is recoverable.
+ */
+export function migrateLegacyMlKeys(): void {
+  if (scopedKey('') === ':anon') return;
+  for (const base of [HISTORY_BASE, PRACTICE_BASE, DRAFT_BASE]) {
+    try {
+      const legacy = localStorage.getItem(base);
+      const scoped = localStorage.getItem(scopedKey(base));
+      if (legacy && !scoped) localStorage.setItem(scopedKey(base), legacy);
+    } catch {
+      /* ignore */
+    }
+  }
+}
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
@@ -19,7 +42,7 @@ function safeParse<T>(raw: string | null, fallback: T): T {
 /* ------------------------------------------------------------------ */
 
 export function loadMlHistory(): MlAttempt[] {
-  const attempts = safeParse<MlAttempt[]>(localStorage.getItem(HISTORY_KEY), []);
+  const attempts = safeParse<MlAttempt[]>(localStorage.getItem(HISTORY_KEY()), []);
   if (!Array.isArray(attempts)) return [];
   return attempts.sort((a, b) => (a.dateISO < b.dateISO ? 1 : -1));
 }
@@ -27,12 +50,12 @@ export function loadMlHistory(): MlAttempt[] {
 export function saveMlAttempt(attempt: MlAttempt): MlAttempt[] {
   const existing = loadMlHistory();
   const next = [attempt, ...existing.filter((a) => a.id !== attempt.id)].slice(0, 100);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  localStorage.setItem(HISTORY_KEY(), JSON.stringify(next));
   return next;
 }
 
 export function clearMlHistory(): void {
-  localStorage.removeItem(HISTORY_KEY);
+  localStorage.removeItem(HISTORY_KEY());
 }
 
 /**
@@ -100,12 +123,12 @@ export interface PracticeState {
 const DEFAULT_PRACTICE: PracticeState = { levels: {}, seen: {} };
 
 export function loadPractice(): PracticeState {
-  return safeParse<PracticeState>(localStorage.getItem(PRACTICE_KEY), DEFAULT_PRACTICE);
+  return safeParse<PracticeState>(localStorage.getItem(PRACTICE_KEY()), DEFAULT_PRACTICE);
 }
 
 export function savePractice(state: PracticeState): void {
   try {
-    localStorage.setItem(PRACTICE_KEY, JSON.stringify(state));
+    localStorage.setItem(PRACTICE_KEY(), JSON.stringify(state));
   } catch {
     /* ignore quota errors */
   }
@@ -132,16 +155,16 @@ export interface MlDraft {
 
 export function saveMlDraft(draft: MlDraft): void {
   try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
   } catch {
     /* ignore */
   }
 }
 
 export function loadMlDraft(): MlDraft | null {
-  return safeParse<MlDraft | null>(localStorage.getItem(DRAFT_KEY), null);
+  return safeParse<MlDraft | null>(localStorage.getItem(DRAFT_KEY()), null);
 }
 
 export function clearMlDraft(): void {
-  localStorage.removeItem(DRAFT_KEY);
+  localStorage.removeItem(DRAFT_KEY());
 }

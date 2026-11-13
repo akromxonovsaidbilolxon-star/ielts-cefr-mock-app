@@ -16,4 +16,19 @@ export default defineConfig({
     host: true,
     allowedHosts: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the vendor libraries out of the app bundle. They change far
+        // less often than app code, so returning users keep them cached
+        // instead of re-downloading ~215 kB on every deploy.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+    // The vendor chunks are expected to be large; app chunks are not.
+    chunkSizeWarningLimit: 300,
+  },
 });

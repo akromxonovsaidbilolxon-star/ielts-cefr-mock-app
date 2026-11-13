@@ -9,7 +9,6 @@ import SpeakingExam from './pages/SpeakingExam';
 import Results from './pages/Results';
 import Progress from './pages/Progress';
 import Login from './pages/Login';
-import Setup from './pages/Setup';
 import Admin from './pages/Admin';
 // Multilevel pages are code-split: a learner taking IELTS never downloads them.
 const MlHome = lazy(() => import('./pages/MlHome'));
@@ -21,6 +20,7 @@ const MlResults = lazy(() => import('./pages/MlResults'));
 const MlProgress = lazy(() => import('./pages/MlProgress'));
 import NotFound from './pages/NotFound';
 import RequireAuth, { RequireOwner } from './auth/RequireAuth';
+import StorageMigration from './components/StorageMigration';
 
 export default function App() {
   return (
@@ -33,14 +33,14 @@ export default function App() {
       }
     >
     <Routes>
-      {/* Public: sign-in and first-run setup */}
+      {/* Public: sign-in only. Accounts are created by the owner. */}
       <Route path="/login" element={<Login />} />
-      <Route path="/setup" element={<Setup />} />
 
       {/* Everything below requires a valid session */}
       <Route
         element={
           <RequireAuth>
+            <StorageMigration />
             <Layout />
           </RequireAuth>
         }

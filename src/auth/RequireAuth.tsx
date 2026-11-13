@@ -2,43 +2,38 @@ import { Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAuth } from './AuthProvider';
 
+function Boot() {
+  return (
+    <div className="boot-screen">
+      <div className="boot-mark">IE</div>
+      <div className="muted small">Checking access…</div>
+    </div>
+  );
+}
+
 export default function RequireAuth({ children }: { children: ReactNode }) {
-  const { session, ready, enforced } = useAuth();
+  const { user, ready, unconfigured } = useAuth();
   const location = useLocation();
 
-  if (!ready) {
-    return (
-      <div className="boot-screen">
-        <div className="boot-mark">IE</div>
-        <div className="muted small">Checking access…</div>
-      </div>
-    );
-  }
+  if (!ready) return <Boot />;
 
-  if (!session) {
-    // With no roster at all, the first visitor is sent to set up the owner.
-    const target = enforced ? '/login' : '/setup';
-    return <Navigate to={target} replace state={{ from: location.pathname }} />;
+  // No Supabase credentials: refuse to pretend the app is protected.
+  if (unconfigured) return <Navigate to="/login" replace />;
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   return <>{children}</>;
 }
 
-/** Owner-only routes. */
+/** Owner-only routes. Authorisation is also enforced by RLS in the database. */
 export function RequireOwner({ children }: { children: ReactNode }) {
-  const { session, ready } = useAuth();
+  const { user, ready } = useAuth();
 
-  if (!ready) {
-    return (
-      <div className="boot-screen">
-        <div className="boot-mark">IE</div>
-        <div className="muted small">Checking access…</div>
-      </div>
-    );
-  }
-
-  if (!session) return <Navigate to="/login" replace />;
-  if (session.role !== 'owner') return <Navigate to="/" replace />;
+  if (!ready) return <Boot />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'owner') return <Navigate to="/" replace />;
 
   return <>{children}</>;
 }
