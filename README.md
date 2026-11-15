@@ -68,8 +68,10 @@ src/
     speaking.ts     3 parts + cue card
     cambridge/      real Cambridge book papers — separate tree, never mixed in
       types.ts        layout, audio and source-notice types
-      c13-test1.ts    Listening 1–40 and Reading 1–40, transcribed
-      c13-test1-writing-speaking.ts   Writing + Speaking
+      c13-test1.ts    Test 1: Listening 1–40 and Reading 1–40, transcribed
+      c13-test1-writing-speaking.ts   Test 1: Writing + Speaking
+      c13-test2.ts    Test 2: Listening 1–40 and Reading 1–40, transcribed
+      c13-test2-writing-speaking.ts   Test 2: Writing + Speaking
       tables.ts       table grids with {{n}} blanks inside cells
       figures.ts      coordinates for the map/diagram line drawings
       index.ts        registry — add the next test here
@@ -219,14 +221,25 @@ papers**, transcribed from the owner's own books. These live in
 `src/content/cambridge/` and are a separate content tree: they never mix with the
 built-in paper, the Multilevel exam, or each other's saved results.
 
-Currently included: **Cambridge IELTS 13 Academic · Test 1** — all four skills.
+Currently included: **Cambridge IELTS 13 Academic · Tests 1 and 2** — all four
+skills in each. Tests 3 and 4 have not been transcribed yet.
 
 | Skill | Material | Marking |
 | --- | --- | --- |
 | Listening | 4 sections, 40 questions, the real recordings | answer key → band |
 | Academic Reading | 3 full passages, 40 questions | answer key → band |
-| Writing | the book's Task 1 (maps) and Task 2 (essay) | heuristic estimate |
+| Writing | the book's Task 1 and Task 2 | heuristic estimate |
 | Speaking | the book's Part 1, cue card and Part 3 | self-assessment |
+
+Test 1's Task 1 is a map comparison; Test 2's is a bar chart, which the app
+redraws in SVG — its bar heights are approximate, so candidates read the
+figures and use phrases like *about* and *just under*.
+
+Question formats vary between tests, so the renderer has one layout per format
+the book uses: `list` (radio options), `compact` (dropdown against a shared
+letter/heading box), `table`, `flow`, `notes` (which also covers a labelled
+left-hand column and sub-headed note blocks), and `chooseTwo` for the
+*Choose TWO letters, A–E* pairs.
 
 ### How to use it
 
@@ -256,10 +269,13 @@ Drive and the browser streams them:
    the shape of `c13-test1.ts`.
 2. Register it in `src/content/cambridge/index.ts` (`CAMBRIDGE_TESTS`).
 3. Add the recording ids from Drive to each section's `audio` field.
-4. Run `npm run check:cambridge` — it verifies that questions 1–40 exist exactly
-   once, that every table/flow-chart blank points at a real question, that each
-   answer is one of its own options, and that every answer matches the printed
-   Cambridge key at the top of `scripts/check-cambridge.mjs`.
+4. Add the official key for the new test to `scripts/check-cambridge.mjs`
+   (`KEY2_LISTENING` is the model) and push it onto the `SUITE` list.
+5. Run `npm run check:cambridge` — it verifies that questions 1–40 exist exactly
+   once, that every table/flow-chart/notes blank points at a real question, that
+   each answer is one of its own options, that *Choose TWO letters* pairs hold
+   two different letters from their own bank, and that every answer matches the
+   printed Cambridge key.
 
 No page code needs to change: the screens read the registry.
 

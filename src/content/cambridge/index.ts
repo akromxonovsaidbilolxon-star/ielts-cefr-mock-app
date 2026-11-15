@@ -1,6 +1,8 @@
 import type { CambridgeTest } from './types';
 import { C13_T1_LISTENING, C13_T1_READING } from './c13-test1';
 import { C13_T1_TASK1, C13_T1_TASK2, C13_T1_SPEAKING } from './c13-test1-writing-speaking';
+import { C13_T2_LISTENING, C13_T2_READING } from './c13-test2';
+import { C13_T2_TASK1, C13_T2_TASK2, C13_T2_SPEAKING } from './c13-test2-writing-speaking';
 
 export * from './types';
 
@@ -32,8 +34,33 @@ export const C13_TEST1: CambridgeTest = {
   speaking: C13_T1_SPEAKING,
 };
 
-/** Every Cambridge test available in the app, newest first. */
-export const CAMBRIDGE_TESTS: CambridgeTest[] = [C13_TEST1];
+/**
+ * Cambridge IELTS 13, Academic, Test 2.
+ *
+ * Same rights and provenance rules as Test 1: transcribed by hand from the
+ * owner's own copy, streamed audio, private classroom use only.
+ */
+export const C13_TEST2: CambridgeTest = {
+  id: 'c13-t2',
+  book: 13,
+  test: 2,
+  label: 'Cambridge IELTS 13 · Academic · Test 2',
+  source: {
+    bookTitle: 'Cambridge IELTS 13 Academic',
+    publisher: 'Cambridge University Press',
+    rights:
+      'Transcribed from Cambridge IELTS 13 Academic (Test 2), © Cambridge University Press. Used for private classroom teaching only — not for redistribution or resale.',
+    provenance:
+      'Questions and passages transcribed by hand from the owner\'s copy of the book (pages 32–51). Listening recordings remain in the owner\'s own Google Drive and are streamed from there; no audio is copied into this repository. The Task 1 bar chart is redrawn from the printed figure and its bar heights are approximate.',
+  },
+  listening: C13_T2_LISTENING,
+  reading: C13_T2_READING,
+  writing: { task1: C13_T2_TASK1, task2: C13_T2_TASK2 },
+  speaking: C13_T2_SPEAKING,
+};
+
+/** Every Cambridge test available in the app, in book order. */
+export const CAMBRIDGE_TESTS: CambridgeTest[] = [C13_TEST1, C13_TEST2];
 
 export function getCambridgeTest(id: string | undefined): CambridgeTest | undefined {
   if (!id) return undefined;

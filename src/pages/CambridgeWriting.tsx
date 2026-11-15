@@ -11,6 +11,7 @@ import {
 import { ProgressCard, TimerCard } from '../components/ExamShell';
 import CambridgeSourceNote from '../components/CambridgeSourceNote';
 import { HospitalMaps } from '../components/CambridgeFigures';
+import BarChart from '../components/BarChart';
 import { HOSPITAL_MAPS } from '../content/cambridge/figures';
 import { CheckIcon } from '../components/Icons';
 
@@ -153,6 +154,15 @@ export default function CambridgeWriting() {
             <p style={{ marginTop: '0.7rem', whiteSpace: 'pre-line' }}>{task.prompt}</p>
 
             {task.figure === 'hospital-maps' && <HospitalMaps panels={HOSPITAL_MAPS.panels} />}
+            {task.chart && (
+              <div style={{ marginTop: '0.9rem' }}>
+                <BarChart spec={task.chart} />
+                <p className="tiny muted" style={{ marginTop: '0.45rem' }}>
+                  Redrawn from the printed chart for this app — bar heights are approximate.
+                  Read each bar to the nearest whole percent.
+                </p>
+              </div>
+            )}
 
             <ul className="list-check" style={{ marginTop: '0.9rem' }}>
               {task.guidance.map((g) => (

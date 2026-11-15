@@ -432,6 +432,15 @@ function ListRows({
 /* Notes layout — numbered rows, full-width prompts                    */
 /* ------------------------------------------------------------------ */
 
+/**
+ * A notes group can be printed three ways in the book:
+ *  1. plain numbered rows (`group.questions`);
+ *  2. a label column down the left whose rows continue across several blanks
+ *     (Test 2 Reading Passage 1) — supplied as `labels` + `sections`;
+ *  3. long notes broken by sub-headings (Test 2 Section 4) — `sections` only.
+ * The left label is merged with `rowSpan` when consecutive rows repeat it, so
+ * "Middle Ages:" can cover five lines exactly as the book shows.
+ */
 function NotesRows({
   group,
   answers,
@@ -443,6 +452,117 @@ function NotesRows({
   onChange: (n: number, v: string) => void;
   review: boolean;
 }) {
+  const byNumber = useMemo(
+    () => new Map(group.questions.map((q) => [q.number, q])),
+    [group.questions],
+  );
+
+  const reviewBadge = (n: number) => {
+    const q = byNumber.get(n);
+    if (!q) return null;
+    const correct = isCorrect(answers[n], q.answer);
+    return (
+      <span className="cnote-review">
+        <span className={`badge ${correct ? 'badge-ok' : 'badge-bad'}`}>
+          {correct ? 'Correct' : `Answer: ${q.answer.split('|')[0]}`}
+        </span>
+        {q.explanation && (
+          <span className="tiny muted" style={{ marginLeft: '0.5rem' }}>
+            {q.explanation}
+          </span>
+        )}
+      </span>
+    );
+  };
+
+  /* Labels + sections: one table row per line, label grouped via rowSpan. */
+  if (group.labels && group.sections) {
+    const rows = group.sections.flatMap((sec, si) =>
+      sec.lines.map((line, li) => ({ sec, si, line, li })),
+    );
+    return (
+      <div className="cnotes">
+        <table className="cnotes-labels">
+          <tbody>
+            {rows.map((row, ri) => {
+              const label = group.labels?.[ri] ?? '';
+              const prev = ri > 0 ? group.labels?.[ri - 1] : undefined;
+              const showLabel = label !== '' && label !== prev;
+              let span = 1;
+              if (showLabel) {
+                while (group.labels?.[ri + span] === label) span += 1;
+              }
+              const newSection = ri === 0 || rows[ri - 1].si !== row.si;
+              const nums = [...row.line.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+              return (
+                <Fragment key={ri}>
+                  {newSection && row.sec.heading && (
+                    <tr className="cnotes-subhead-row">
+                      <td colSpan={label || group.labels ? 2 : 1} className="cnotes-subhead">
+                        {row.sec.heading}
+                      </td>
+                    </tr>
+                  )}
+                  <tr className="cnotes-line">
+                    {showLabel && (
+                      <th className="cnotes-label" rowSpan={span} scope="row">
+                        {label}
+                      </th>
+                    )}
+                    <td className="cnotes-cell">
+                      <div className="cnotes-bullet">
+                        <RichText
+                          text={row.line}
+                          questions={group.questions}
+                          answers={answers}
+                          onChange={onChange}
+                          review={review}
+                        />
+                      </div>
+                      {review && nums.map((n) => <Fragment key={n}>{reviewBadge(n)}</Fragment>)}
+                    </td>
+                  </tr>
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  /* Sub-headed notes with no label column (Section 4). */
+  if (group.sections) {
+    return (
+      <div className="cnotes">
+        {group.sections.map((sec, si) => (
+          <div key={si} className="cnotes-section">
+            {sec.heading && <div className="cnotes-subhead">{sec.heading}</div>}
+            {sec.lines.map((line, li) => {
+              const nums = [...line.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+              return (
+                <div key={li} className="cnote-row">
+                  <span className="cnote-body">
+                    <span className="cnote-prompt">
+                      <RichText
+                        text={line}
+                        questions={group.questions}
+                        answers={answers}
+                        onChange={onChange}
+                        review={review}
+                      />
+                    </span>
+                    {review && nums.map((n) => <Fragment key={n}>{reviewBadge(n)}</Fragment>)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="cnotes">
       {group.questions.map((q) => {
@@ -500,6 +620,106 @@ function richPrompt(
 }
 
 /* ------------------------------------------------------------------ */
+/* Choose TWO letters — one tick-box bank per pair of answers           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Used by "Choose TWO letters, A–E" questions such as 17 & 18. Both numbers
+ * share one tick-box bank in the book, so the UI collects exactly two letters
+ * and maps them onto the two question numbers. Order does not matter: each
+ * correct letter earns its own mark, which is how IELTS credits this format.
+ */
+function ChooseTwoRows({
+  group,
+  answers,
+  onChange,
+  review,
+}: {
+  group: CambridgeGroup;
+  answers: Record<number, string>;
+  onChange: (n: number, v: string) => void;
+  review: boolean;
+}) {
+  return (
+    <div className="cpairs">
+      {(group.pairs ?? []).map((pair) => {
+        const marks = pair.answers;
+        const picked = marks.map((n) => answers[n] ?? '');
+        const key = marks
+          .map((n) => group.questions.find((q) => q.number === n)?.answer.split('|')[0] ?? '')
+          .filter(Boolean);
+        const pairCorrect =
+          marks.every((n) => isCorrect(answers[n], group.questions.find((q) => q.number === n)?.answer ?? '')) &&
+          new Set(key.map((k) => k.toUpperCase())).size === key.length;
+
+        const toggle = (letter: string) => {
+          if (review) return;
+          const at = picked.indexOf(letter);
+          if (at >= 0) {
+            // Clicking a chosen letter clears that box.
+            onChange(marks[at], '');
+            return;
+          }
+          // Fill the first empty box, or replace the oldest pick when both are full.
+          const target = picked.indexOf('');
+          onChange(target >= 0 ? marks[target] : marks[0], letter);
+        };
+
+        return (
+          <div key={pair.heading} className="cpair">
+            <div className="cpair-head">{pair.heading}</div>
+            <div className="cpair-stem">
+              <span className="q-num">{marks.join(' & ')}</span>
+              <span>{pair.prompt}</span>
+            </div>
+            <div className="cpair-bank">
+              {(group.box?.items ?? []).map((item) => {
+                const on = picked.includes(item.letter);
+                const isKey = key.includes(item.letter);
+                const cls = [
+                  'cpair-opt',
+                  on ? 'selected' : '',
+                  review && isKey ? 'correct-opt' : '',
+                  review && on && !isKey ? 'incorrect-opt' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+                return (
+                  <label key={item.letter} className={cls}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => toggle(item.letter)}
+                      disabled={review}
+                      aria-label={`${item.letter} for questions ${marks.join(' and ')}`}
+                    />
+                    <span className="cbox-letter">{item.letter}</span>
+                    <span>{item.text}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="cpair-slots" aria-hidden={false}>
+              {marks.map((n) => (
+                <span key={n} className={`cpair-slot${picked[marks.indexOf(n)] ? ' filled' : ''}`}>
+                  <span className="q-num">{n}</span>
+                  <b>{picked[marks.indexOf(n)] || '–'}</b>
+                </span>
+              ))}
+              {review && (
+                <span className={`badge ${pairCorrect ? 'badge-ok' : 'badge-bad'}`} style={{ marginLeft: 'auto' }}>
+                  {pairCorrect ? 'Both correct' : `Answer: ${key.join(' & ')}`}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Public: one group                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -548,10 +768,14 @@ export function CambridgeGroupBlock({
           <FlowChart group={group} answers={answers} onChange={onChange} review={review} />
         )}
 
-        {useCompact && group.box && <ChoiceBox title={group.box.title} items={group.box.items} />}
-        {useCompact && (
-          <CompactRows group={group} answers={answers} onChange={onChange} review={review} />
-        )}
+      {useCompact && group.box && <ChoiceBox title={group.box.title} items={group.box.items} />}
+      {useCompact && (
+        <CompactRows group={group} answers={answers} onChange={onChange} review={review} />
+      )}
+
+      {group.layout === 'chooseTwo' && (
+        <ChooseTwoRows group={group} answers={answers} onChange={onChange} review={review} />
+      )}
 
         {group.layout === 'list' && (
           <ListRows group={group} answers={answers} onChange={onChange} review={review} />

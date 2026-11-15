@@ -1,3 +1,5 @@
+import type { ChartSpec } from '../../types';
+
 /**
  * Small inline SVG figures that stand in for the maps and diagrams printed in
  * the book. They are drawn from the original layout so the questions stay
@@ -77,3 +79,26 @@ export const HOSPITAL_MAPS = {
     },
   ],
 };
+
+/* ------------------------------------------------------------------ */
+/* Test 2 · Writing Task 1 — household tenure in England and Wales     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Bar chart of homes owned vs rented, 1918–2011.
+ *
+ * These percentages were read off the printed figure in the owner's copy of
+ * the book, so they are close approximations of individual bar heights rather
+ * than the exact data Cambridge used. The app labels the redrawing as such;
+ * candidates only need the overall pattern to answer the task.
+ */
+export const ENGLAND_WALES_TENURE = {
+  title: 'Households owning and renting accommodation in England and Wales, 1918 to 2011',
+  yLabel: '% of households',
+  yMax: 90,
+  categories: ['1918', '1939', '1953', '1961', '1971', '1981', '1991', '2001', '2011'],
+  series: [
+    { name: 'households in owned accommodation', values: [23, 32, 33, 41, 50, 60, 67, 69, 64] },
+    { name: 'households in rented accommodation', values: [77, 68, 67, 59, 50, 40, 33, 31, 36] },
+  ],
+} satisfies ChartSpec;

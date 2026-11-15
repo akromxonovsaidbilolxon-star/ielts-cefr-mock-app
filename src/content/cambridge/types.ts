@@ -19,7 +19,19 @@ export type CambridgeLayout =
   /** Vertical flow chart made of boxes and arrows. */
   | 'flow'
   /** Prose notes with inline blanks (Section 4 style). */
-  | 'notes';
+  | 'notes'
+  /**
+   * "Choose TWO letters, A–E" — one tick-box bank serving a pair of answers,
+   * marked together (Test 2 Section 2, Questions 17 & 18).
+   */
+  | 'chooseTwo';
+
+export interface CambridgeNoteSection {
+  /** Blue sub-heading, e.g. "Encoding" or "Consolidation". */
+  heading?: string;
+  /** Bullet lines. `{{n}}` becomes a live blank. */
+  lines: string[];
+}
 
 export interface CambridgeBox {
   title: string;
@@ -45,6 +57,17 @@ export interface CambridgeGroup {
   table?: CambridgeTable;
   flow?: { title?: string; steps: string[] };
   box?: CambridgeBox;
+  /**
+   * Left-hand label column for the `notes` layout, one row per bullet line of
+   * `sections` (e.g. "Biblical times:", "Ancient Rome:", "Middle Ages:").
+   * Rows that share the same label are merged by the renderer, so a single
+   * label can span several blanks the way the book prints it.
+   */
+  labels?: string[];
+  /** Sub-headed blocks for a long notes group (Test 2 Section 4). */
+  sections?: CambridgeNoteSection[];
+  /** Stems for a `chooseTwo` group, one per answer pair. */
+  pairs?: { heading: string; prompt: string; answers: number[] }[];
   /** Named inline figure to draw above the questions. */
   figure?: 'granford';
 }

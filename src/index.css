@@ -2008,3 +2008,118 @@ input, textarea, select {
   .wtextarea { min-height: 240px; font-size: 0.92rem; }
   .caudio-seek { min-width: 60px; }
 }
+
+/* ---------------- labelled notes (Reading Passage 1 style) ---------------- */
+
+.cnotes-labels {
+  width: 100%;
+  border-collapse: collapse;
+}
+.cnotes-labels .cnotes-line td,
+.cnotes-labels .cnotes-line th {
+  padding: 0.42rem 0;
+  vertical-align: top;
+  border-bottom: 1px dashed var(--border);
+}
+.cnotes-labels .cnotes-line:last-child td,
+.cnotes-labels .cnotes-line:last-child th { border-bottom: 0; }
+.cnotes-labels .cnotes-label {
+  width: 9.5rem;
+  padding-right: 0.9rem;
+  text-align: left;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+.cnotes-cell { font-size: 0.9rem; line-height: 1.6; }
+.cnotes-bullet { position: relative; padding-left: 0.9rem; }
+.cnotes-bullet::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--faint);
+}
+.cnotes-subhead-row td { padding: 0.85rem 0 0.3rem; }
+.cnotes-subhead {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--brand);
+  letter-spacing: 0.01em;
+}
+.cnotes-section + .cnotes-section { margin-top: 0.5rem; }
+.cnotes-section .cnotes-subhead { padding: 0.75rem 0 0.15rem; }
+.cnotes-labels .cnote-review,
+.cnotes-section .cnote-review { display: block; }
+
+/* ---------------- choose TWO letters (one bank per answer pair) -------- */
+
+.cpairs { display: flex; flex-direction: column; gap: 1.15rem; }
+.cpair {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.cpair-head {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--brand);
+  margin-bottom: 0.3rem;
+}
+.cpair-stem {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+.cpair-stem .q-num { width: auto; }
+.cpair-bank { display: flex; flex-direction: column; gap: 0.3rem; }
+.cpair-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.cpair-opt:hover:not(:has(input:disabled)) { background: var(--brand-light); border-color: var(--brand); }
+.cpair-opt input { margin: 0.15rem 0 0; accent-color: var(--brand); }
+.cpair-opt.selected { background: var(--brand-light); border-color: var(--brand); }
+.cpair-opt.correct-opt { background: var(--ok-light); border-color: var(--ok); }
+.cpair-opt.incorrect-opt { background: var(--bad-light); border-color: var(--bad); }
+.cpair-opt .cbox-letter { margin: 0; }
+.cpair-slots {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--border);
+}
+.cpair-slot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.18rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 99px;
+  font-size: 0.85rem;
+  color: var(--faint);
+  min-width: 4.2rem;
+}
+.cpair-slot.filled { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+.cpair-slot .q-num { width: auto; }
+.cpair-slot b { font-weight: 800; }
+
+@media (max-width: 640px) {
+  .cnotes-labels .cnotes-label { width: 6.5rem; padding-right: 0.6rem; font-size: 0.78rem; }
+  .cpair { padding: 0.8rem 0.7rem; }
+  .cpair-stem { grid-template-columns: 3rem minmax(0, 1fr); }
+}

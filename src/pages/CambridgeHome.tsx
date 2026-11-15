@@ -245,8 +245,9 @@ export function CambridgeIndex() {
       </div>
 
       <div className="callout callout-info" style={{ marginTop: '1.3rem' }}>
-        <div className="callout-title">Adding the next test</div>
-        Transcribe Test 2 into <code>src/content/cambridge/</code> and register it in{' '}
+        <div className="callout-title">Tests 3 and 4 are not in the app yet</div>
+        Each test is transcribed by hand from the book, so they arrive one at a time. To add the
+        next one, create a content file in <code>src/content/cambridge/</code> and register it in{' '}
         <code>src/content/cambridge/index.ts</code>. The pages, scoring and storage all read from
         that list, so no other code needs to change.
       </div>

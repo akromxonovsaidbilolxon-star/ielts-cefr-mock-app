@@ -7,7 +7,7 @@
  * and the mobile assets.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const C = {
@@ -185,13 +185,19 @@ if (existsSync('src/content/cambridge/index.ts')) {
   // A Drive recording that lost its sharing is the failure mode that silently
   // breaks a listening test, so check the ids are at least well formed.
   try {
-    const src = readFileSync('src/content/cambridge/c13-test1.ts', 'utf8');
-    const ids = [...src.matchAll(/driveId:\s*'([^']+)'/g)].map((m) => m[1]);
-    if (ids.length === 4) ok(`4 Drive recordings registered`);
-    else warn(`${ids.length} Drive recordings registered — expected 4 per test`);
-    for (const id of ids) {
-      if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) bad(`Drive id looks malformed: ${id}`);
+    const files = readdirSync('src/content/cambridge').filter((f) => /^c13-test\d+\.ts$/.test(f));
+    let total = 0;
+    for (const file of files) {
+      const src = readFileSync(`src/content/cambridge/${file}`, 'utf8');
+      const ids = [...src.matchAll(/driveId:\s*'([^']+)'/g)].map((m) => m[1]);
+      if (ids.length === 4) ok(`${file}: 4 Drive recordings registered`);
+      else warn(`${file}: ${ids.length} Drive recordings — expected 4 per test`);
+      for (const id of ids) {
+        total += 1;
+        if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) bad(`Drive id looks malformed: ${id}`);
+      }
     }
+    info(`${files.length} Cambridge test file(s) · ${total} recordings in total`);
   } catch {
     warn('Could not read the Cambridge listening content.');
   }
