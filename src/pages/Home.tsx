@@ -177,6 +177,24 @@ export default function Home() {
             </div>
           </Link>
 
+          <Link to="/cambridge" className="skill-card exam-choice">
+            <div className="row-between">
+              <span className="skill-icon" style={{ background: 'var(--ok-light)', color: 'var(--ok)' }}>
+                <BookIcon />
+              </span>
+              <span className="badge badge-ok">Real past paper</span>
+            </div>
+            <h3>Cambridge IELTS Books</h3>
+            <p>
+              Actual test papers from the Cambridge books, with the real
+              recordings. Listening, Reading, Writing and Speaking for each test.
+            </p>
+            <div className="skill-card-foot">
+              <span>Cambridge 13 · Test 1</span>
+              <span className="skill-go">Open →</span>
+            </div>
+          </Link>
+
           <Link to="/multilevel" className="skill-card exam-choice">
             <div className="row-between">
               <span className="skill-icon" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>

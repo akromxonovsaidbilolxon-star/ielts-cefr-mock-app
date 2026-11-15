@@ -16,6 +16,7 @@ const NAV = [
   { to: '/', label: 'Home', short: 'Home', end: true, icon: <HomeIcon /> },
   { to: '/listening', label: 'Listening', short: 'Listen', icon: <HeadphonesIcon /> },
   { to: '/reading', label: 'Reading', short: 'Read', icon: <BookIcon /> },
+  { to: '/cambridge', label: 'Cambridge', short: 'Cambridge', icon: <BookIcon /> },
   { to: '/writing', label: 'Writing', short: 'Write', icon: <PenIcon /> },
   { to: '/speaking', label: 'Speaking', short: 'Speak', icon: <MicIcon /> },
   { to: '/progress', label: 'Progress', short: 'Progress', icon: <ChartIcon /> },
@@ -27,7 +28,7 @@ export default function Layout() {
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isExam = /^\/(listening|reading|writing|speaking)/.test(location.pathname);
+  const isExam = /^\/(listening|reading|writing|speaking|cambridge)/.test(location.pathname);
 
   // Close the account menu when the route changes.
   useEffect(() => {

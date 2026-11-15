@@ -176,7 +176,31 @@ if (existsSync('dist/index.html')) {
   }
 }
 
-section('5. HTTPS check');
+section('5. Cambridge book material');
+if (existsSync('src/content/cambridge/index.ts')) {
+  ok('Cambridge content tree present');
+  info('Recordings are streamed from the owner\'s Google Drive, so they are not in dist/.');
+  info('Each book file must stay shared as "Anyone with the link".');
+
+  // A Drive recording that lost its sharing is the failure mode that silently
+  // breaks a listening test, so check the ids are at least well formed.
+  try {
+    const src = readFileSync('src/content/cambridge/c13-test1.ts', 'utf8');
+    const ids = [...src.matchAll(/driveId:\s*'([^']+)'/g)].map((m) => m[1]);
+    if (ids.length === 4) ok(`4 Drive recordings registered`);
+    else warn(`${ids.length} Drive recordings registered — expected 4 per test`);
+    for (const id of ids) {
+      if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) bad(`Drive id looks malformed: ${id}`);
+    }
+  } catch {
+    warn('Could not read the Cambridge listening content.');
+  }
+  info('Run npm run check:cambridge to verify every answer against the printed key.');
+} else {
+  warn('No Cambridge content yet.');
+}
+
+section('6. HTTPS check');
 info('Sign-in and the microphone recorder need HTTPS (or localhost).');
 info('GitHub Pages, Netlify, Vercel and Cloudflare Pages all provide it.');
 info('A LAN address like http://192.168.x.x does NOT — iOS disables Web Crypto there.');

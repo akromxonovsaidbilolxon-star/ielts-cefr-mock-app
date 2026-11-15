@@ -18,6 +18,16 @@ const MlWriting = lazy(() => import('./pages/MlWriting'));
 const MlSpeaking = lazy(() => import('./pages/MlSpeaking'));
 const MlResults = lazy(() => import('./pages/MlResults'));
 const MlProgress = lazy(() => import('./pages/MlProgress'));
+// Cambridge book tests are code-split too: heavy passages are only fetched when opened.
+const CambridgeHome = lazy(() => import('./pages/CambridgeHome'));
+const CambridgeIndex = lazy(() =>
+  import('./pages/CambridgeHome').then((m) => ({ default: m.CambridgeIndex })),
+);
+const CambridgeListening = lazy(() => import('./pages/CambridgeListening'));
+const CambridgeReading = lazy(() => import('./pages/CambridgeReading'));
+const CambridgeWriting = lazy(() => import('./pages/CambridgeWriting'));
+const CambridgeSpeaking = lazy(() => import('./pages/CambridgeSpeaking'));
+const CambridgeResults = lazy(() => import('./pages/CambridgeResults'));
 import NotFound from './pages/NotFound';
 import RequireAuth, { RequireOwner } from './auth/RequireAuth';
 import StorageMigration from './components/StorageMigration';
@@ -61,6 +71,15 @@ export default function App() {
         <Route path="/multilevel/speaking" element={<MlSpeaking />} />
         <Route path="/multilevel/results" element={<MlResults />} />
         <Route path="/multilevel/progress" element={<MlProgress />} />
+
+        {/* Cambridge book material — real exam papers, separate content tree */}
+        <Route path="/cambridge" element={<CambridgeIndex />} />
+        <Route path="/cambridge/:testId" element={<CambridgeHome />} />
+        <Route path="/cambridge/:testId/listening" element={<CambridgeListening />} />
+        <Route path="/cambridge/:testId/reading" element={<CambridgeReading />} />
+        <Route path="/cambridge/:testId/writing" element={<CambridgeWriting />} />
+        <Route path="/cambridge/:testId/speaking" element={<CambridgeSpeaking />} />
+        <Route path="/cambridge/:testId/results" element={<CambridgeResults />} />
 
         <Route
           path="/admin"
