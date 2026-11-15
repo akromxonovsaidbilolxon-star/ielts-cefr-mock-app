@@ -228,6 +228,15 @@ Currently included: **Cambridge IELTS 13 Academic · Test 1** — all four skill
 | Writing | the book's Task 1 (maps) and Task 2 (essay) | heuristic estimate |
 | Speaking | the book's Part 1, cue card and Part 3 | self-assessment |
 
+### How to use it
+
+1. Sign in with your owner account.
+2. Tap **Cambridge** in the top menu (or the *Cambridge IELTS Books* card on the home page).
+3. Choose a skill: Listening, Reading, Writing or Speaking.
+4. Press play on the recording, answer the questions, press **Submit test**.
+5. The result is saved in that browser, and the answer review shows the correct
+   answer plus a short reason for every question.
+
 ### Where the audio lives
 
 The recordings are **not in this repository**. They stay in the owner's Google
