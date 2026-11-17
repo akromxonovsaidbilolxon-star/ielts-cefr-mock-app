@@ -425,19 +425,41 @@ runs full-screen, without an app store, an APK or an Xcode build.
 
 ### Installing it
 
-**Android (Chrome):** open the site → menu → **Add to Home screen / Install app**.
-You can also scan the deployed URL with **PWABuilder** to wrap it as an APK/AAB
-for the Play Store.
+**Android (Chrome):** open the site → menu (⋮) → **Install app** / **Add to Home
+screen**. If only "Add to Home screen" appears, the site is being offered as a
+plain shortcut rather than an installable app — check
+`chrome://serviceworker-internals` or DevTools → **Application → Manifest →
+Installability**, which names the unmet condition.
+
+There is **no APK file to download**, and there never was: this is a website
+that the browser installs. Android users should not look for an `.apk`. If a
+Play Store listing is ever wanted, the deployed URL can be wrapped with
+**PWABuilder** — that is a separate job with its own Google account steps.
 
 **iPhone / iPad (Safari):** open the site → **Share** → **Add to Home Screen**.
 (iOS does not allow the install prompt from Chrome — Safari only.)
 
-### Note on offline use
+### How the install works (and why it did not before)
 
-A service worker is **not** registered, so the app needs a connection to load.
-Adding one would cache the shell and make exams work offline; the trade-off is
-that you must remember to update the cache version on every deploy, otherwise
-users keep a stale build. Say the word and it can be added.
+Installing needs two things, and the app was missing both:
+
+1. **A service worker with a fetch handler.** Chrome on Android will not offer
+   **Install app** without one, even on a perfectly valid HTTPS site.
+   `public/sw.js` now provides it, registered from
+   `src/lib/registerServiceWorker.ts` in production builds only.
+2. **Real PNG files for the manifest icons.** Chrome only accepts file URLs
+   here; the manifest previously embedded the icons as base64 `data:` URLs.
+
+`npm run preflight` now fails if either one regresses.
+
+The worker caches the app shell and the hashed build assets, so a dropped
+connection no longer loses the page mid-exam. Page loads are **network first**,
+so a new deploy is picked up on the next online visit — there is no stale-build
+trap to remember. `CACHE_VERSION` in `public/sw.js` only needs bumping if the
+caching rules themselves change.
+
+Sign-in and the Google Drive recordings are deliberately **not** cached: they
+are cross-origin and are always fetched live.
 
 ## Publishing (GitHub Pages)
 

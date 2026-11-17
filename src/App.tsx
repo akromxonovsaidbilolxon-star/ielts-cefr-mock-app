@@ -31,6 +31,7 @@ const CambridgeResults = lazy(() => import('./pages/CambridgeResults'));
 import NotFound from './pages/NotFound';
 import RequireAuth, { RequireOwner } from './auth/RequireAuth';
 import StorageMigration from './components/StorageMigration';
+import InstallPrompt from './components/InstallPrompt';
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
         element={
           <RequireAuth>
             <StorageMigration />
+            <InstallPrompt />
             <Layout />
           </RequireAuth>
         }
