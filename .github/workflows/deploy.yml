@@ -68,6 +68,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      # The passages are copyrighted book text and must never reach the public
+      # bundle. This fails the deploy if any of them do, rather than quietly
+      # publishing them the way the app used to.
+      - name: Guard against book text in the bundle
+        run: npm run check:bundle
+
       # Fail loudly rather than silently publishing an app nobody can sign into.
       - name: Verify credentials are baked into the build
         env:
