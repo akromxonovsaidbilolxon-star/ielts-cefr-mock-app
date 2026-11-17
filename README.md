@@ -224,6 +224,13 @@ built-in paper, the Multilevel exam, or each other's saved results.
 Currently included: **Cambridge IELTS 13 Academic · Tests 1 and 2** — all four
 skills in each. Tests 3 and 4 have not been transcribed yet.
 
+The catalogue already groups by book (`groupByBook` in
+`src/content/cambridge/types.ts`), so adding Book 14 or a General Training paper
+needs no page changes: register the tests in `CAMBRIDGE_TESTS` with their `book`
+and `module`, and the catalogue lists them under their own heading, newest book
+first, with a dashed "not yet" card for any tests still outstanding. Academic and
+General Training papers of the same book are kept in separate groups.
+
 | Skill | Material | Marking |
 | --- | --- | --- |
 | Listening | 4 sections, 40 questions, the real recordings | answer key → band |

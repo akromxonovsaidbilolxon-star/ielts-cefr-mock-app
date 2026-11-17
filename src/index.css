@@ -2163,3 +2163,14 @@ input, textarea, select {
   .install-bar { padding: 0.5rem 0.6rem; gap: 0.45rem; }
   .install-text .tiny { display: none; }
 }
+
+/* ---------------- catalogue: tests still to be transcribed ------------- */
+
+.skill-card-pending {
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+}
+.skill-card-pending h3,
+.skill-card-pending p { color: var(--faint); }
+.skill-icon-pending { background: var(--border); color: var(--faint); }

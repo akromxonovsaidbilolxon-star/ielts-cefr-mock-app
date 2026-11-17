@@ -114,6 +114,12 @@ export interface CambridgeSource {
 
 export interface CambridgeTest {
   id: string;
+  /**
+   * Academic or General Training. Book 13 of the Academic series is used here,
+   * but the same shape holds for the General Training papers, which have a
+   * different Reading section and a letter-writing Task 1.
+   */
+  module?: 'academic' | 'general';
   book: number;
   test: number;
   label: string;
@@ -155,4 +161,50 @@ export function listeningGroups(test: CambridgeTest): CambridgeGroup[] {
 
 export function readingGroups(test: CambridgeTest): CambridgeGroup[] {
   return test.reading.flatMap((p) => p.groups);
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Multi-book helpers                                                  */
+/* ------------------------------------------------------------------ */
+
+export interface CambridgeBookGroup {
+  book: number;
+  title: string;
+  module: 'academic' | 'general';
+  tests: CambridgeTest[];
+}
+
+/**
+ * Group the flat test list by book, newest book first, so the catalogue stays
+ * readable once there are dozens of tests rather than two. Tests in the same
+ * book are kept in test order.
+ */
+export function groupByBook(tests: CambridgeTest[]): CambridgeBookGroup[] {
+  const groups = new Map<string, CambridgeBookGroup>();
+
+  for (const test of tests) {
+    const module = test.module ?? 'academic';
+    const key = `${test.book}-${module}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.tests.push(test);
+    } else {
+      groups.set(key, {
+        book: test.book,
+        title: test.source.bookTitle,
+        module,
+        tests: [test],
+      });
+    }
+  }
+
+  return [...groups.values()]
+    .map((g) => ({ ...g, tests: [...g.tests].sort((a, b) => a.test - b.test) }))
+    .sort((a, b) => b.book - a.book);
+}
+
+/** "Book 13 · Test 2" — the short label used in lists and dropdowns. */
+export function shortTestLabel(test: CambridgeTest): string {
+  return `Book ${test.book} · Test ${test.test}`;
 }

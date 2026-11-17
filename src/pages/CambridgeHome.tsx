@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CAMBRIDGE_TESTS, getCambridgeTest } from '../content/cambridge';
+import { CAMBRIDGE_TESTS, getCambridgeTest, groupByBook } from '../content/cambridge';
 import { bandToCefr } from '../lib/scoring';
 import { loadCambridgeHistory, latestForTest, bestForTest, type CambridgeScore } from '../lib/cambridgeStorage';
 import type { Skill } from '../types';
@@ -207,8 +207,18 @@ export default function CambridgeHome() {
   );
 }
 
-/** Catalogue page: every Cambridge test in the app. */
+/**
+ * Catalogue page: every Cambridge test in the app, grouped by book.
+ *
+ * Grouping matters once more than one book is loaded. Books are listed newest
+ * first, and any book whose other tests have not been transcribed yet says so
+ * plainly, rather than pretending the book is complete.
+ */
 export function CambridgeIndex() {
+  const books = groupByBook(CAMBRIDGE_TESTS);
+  const totalTests = CAMBRIDGE_TESTS.length;
+  const testsPerBook = 4;
+
   return (
     <>
       <div className="part-hero">
@@ -219,42 +229,92 @@ export function CambridgeIndex() {
             from the built-in free mock paper.
           </p>
         </div>
-        <span className="badge badge-brand">{CAMBRIDGE_TESTS.length} test</span>
+        <span className="badge badge-brand">
+          {totalTests} test{totalTests === 1 ? '' : 's'} · {books.length} book
+          {books.length === 1 ? '' : 's'}
+        </span>
       </div>
 
-      <div className="skill-grid" style={{ marginTop: '1.2rem' }}>
-        {CAMBRIDGE_TESTS.map((t) => (
-          <Link key={t.id} to={`/cambridge/${t.id}`} className="skill-card">
-            <div className="row-between">
-              <span className="skill-icon">
-                <BookIcon />
+      {books.map((book) => {
+        const missing = testsPerBook - book.tests.length;
+        return (
+          <section key={`${book.book}-${book.module}`} style={{ marginTop: '1.5rem' }}>
+            <div className="row-between" style={{ alignItems: 'baseline', marginBottom: '0.7rem' }}>
+              <h3 style={{ margin: 0 }}>
+                Cambridge IELTS {book.book}
+                {book.module === 'general' ? ' · General Training' : ' · Academic'}
+              </h3>
+              <span className="tiny muted">
+                {book.tests.length} of {testsPerBook} tests
               </span>
-              <span className="badge badge-brand">Book {t.book}</span>
             </div>
-            <h3>{t.label}</h3>
-            <p>
-              Listening (4 sections), Academic Reading (3 passages), Writing (2 tasks) and
-              Speaking (3 parts) — all from the book.
-            </p>
-            <div className="skill-card-foot">
-              <span>4 skills · 100 questions</span>
-              <span className="skill-go">Open →</span>
+
+            <div className="skill-grid">
+              {book.tests.map((t) => (
+                <Link key={t.id} to={`/cambridge/${t.id}`} className="skill-card">
+                  <div className="row-between">
+                    <span className="skill-icon">
+                      <BookIcon />
+                    </span>
+                    <span className="badge badge-brand">Test {t.test}</span>
+                  </div>
+                  <h3>Test {t.test}</h3>
+                  <p>
+                    Listening (4 sections), Reading (3 passages), Writing (2 tasks) and Speaking
+                    (3 parts) — all from the book.
+                  </p>
+                  <div className="skill-card-foot">
+                    <span>4 skills · 100 questions</span>
+                    <span className="skill-go">Open →</span>
+                  </div>
+                </Link>
+              ))}
+
+              {missing > 0 && (
+                <div className="skill-card skill-card-pending">
+                  <div className="row-between">
+                    <span className="skill-icon skill-icon-pending">
+                      <BookIcon />
+                    </span>
+                    <span className="badge">Not yet</span>
+                  </div>
+                  <h3>
+                    {missing === 1 ? 'One more test' : `${missing} more tests`}
+                  </h3>
+                  <p>
+                    Not transcribed yet. Each test is copied from the book by hand, so they are
+                    added one at a time.
+                  </p>
+                  <div className="skill-card-foot">
+                    <span>Coming later</span>
+                  </div>
+                </div>
+              )}
             </div>
-          </Link>
-        ))}
-      </div>
+          </section>
+        );
+      })}
 
       <div className="callout callout-info" style={{ marginTop: '1.3rem' }}>
-        <div className="callout-title">Tests 3 and 4 are not in the app yet</div>
-        Each test is transcribed by hand from the book, so they arrive one at a time. To add the
-        next one, create a content file in <code>src/content/cambridge/</code> and register it in{' '}
-        <code>src/content/cambridge/index.ts</code>. The pages, scoring and storage all read from
-        that list, so no other code needs to change.
+        <div className="callout-title">Why not all 60 tests at once?</div>
+        The Cambridge series runs from Book 1 to Book 17, with four tests in each — roughly 60
+        tests, or about 600 pages to copy by hand. Each answer is also checked against the printed
+        answer key by <code>npm run check:cambridge</code>, which is what keeps a typo from
+        silently costing a student marks.
+        <br />
+        <br />
+        To add a test: create a content file in <code>src/content/cambridge/</code>, register it in{' '}
+        <code>src/content/cambridge/index.ts</code>, and add its official key to{' '}
+        <code>scripts/check-cambridge.mjs</code>.
       </div>
 
       <div className="row wrap" style={{ marginTop: '1.5rem' }}>
-        <Link to="/" className="btn btn-ghost">
-          ← Back to home
+        <Link to="/cambridge" className="btn btn-ghost">
+          ← All Cambridge tests
+        </Link>
+        <Link to="/" className="btn btn-soft">
+          App home
+          <ArrowRightIcon className="" />
         </Link>
       </div>
     </>
