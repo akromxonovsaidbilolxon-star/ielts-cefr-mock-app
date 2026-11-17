@@ -9,6 +9,7 @@ import {
   scoreToAward,
   awardLabel,
 } from '../lib/multilevel';
+import { CAMBRIDGE_TESTS, groupByBook } from '../content/cambridge';
 import type { Attempt, Skill } from '../types';
 import {
   ArrowRightIcon,
@@ -174,6 +175,28 @@ export default function Home() {
             <div className="skill-card-foot">
               <span>Listening · Reading · Writing · Speaking</span>
               <span className="skill-go">Start →</span>
+            </div>
+          </Link>
+
+          <Link to="/cambridge" className="skill-card exam-choice">
+            <div className="row-between">
+              <span className="skill-icon" style={{ background: 'var(--ok-light)', color: 'var(--ok)' }}>
+                <BookIcon />
+              </span>
+              <span className="badge badge-ok">Real past paper</span>
+            </div>
+            <h3>Cambridge IELTS Books</h3>
+            <p>
+              Actual test papers from the Cambridge books, with the real
+              recordings. Listening, Reading, Writing and Speaking for each test.
+            </p>
+            <div className="skill-card-foot">
+              <span>
+                {CAMBRIDGE_TESTS.length} test{CAMBRIDGE_TESTS.length === 1 ? '' : 's'} ·{' '}
+                {groupByBook(CAMBRIDGE_TESTS).length} book
+                {groupByBook(CAMBRIDGE_TESTS).length === 1 ? '' : 's'}
+              </span>
+              <span className="skill-go">Open →</span>
             </div>
           </Link>
 

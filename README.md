@@ -13,6 +13,13 @@ API keys.
 | **Writing** | Task 1 report from an SVG data chart + Task 2 essay, live word count and countdown | Heuristic feedback on length, paragraphing, lexical range, cohesion and sentence variety; Task 2 weighted ×2 |
 | **Speaking** | All 3 parts, cue card, 1-minute prep timer, 2-minute long turn, optional microphone recording | Self-assessment against the four IELTS criteria |
 
+### Real Cambridge papers
+
+A third content tree holds **real Cambridge IELTS test papers**, transcribed
+from the owner's books and complete with the actual listening recordings. See
+[Cambridge book tests](#cambridge-book-tests) for what is included, where the
+audio lives and how to add the next test.
+
 Other features:
 
 - **Band → CEFR mapping** (A1–C2) with the descriptive scale on the home page
@@ -32,9 +39,11 @@ npm run dev      # http://localhost:5173
 ```
 
 ```bash
-npm run build    # type-check + production build into dist/
-npm run preview  # serve the production build
+npm run build            # type-check + production build into dist/
+npm run preview          # serve the production build
 npm run typecheck
+npm run check:cambridge  # verify the Cambridge content against the printed key
+npm run preflight        # pre-deploy checklist
 ```
 
 ## Tech stack
@@ -43,7 +52,8 @@ npm run typecheck
 - **react-router-dom** with `HashRouter`, so deep links work on any static host
 - Hand-written CSS design system — no UI framework, no chart library
   (the bar chart and trend chart are plain SVG)
-- Web Speech API for listening audio, MediaRecorder for speaking practice
+- Real recordings streamed from Google Drive (Cambridge), Web Speech API fallback
+  for the built-in paper, MediaRecorder for speaking practice
 - Supabase Auth (email + password) with Postgres Row Level Security for access
   control; PWA manifest + icons for home-screen installation
 
@@ -52,10 +62,19 @@ npm run typecheck
 ```
 src/
   content/          exam material
-    listening.ts    4 parts, scripts + question groups
-    reading.ts      3 academic passages + 40 questions
+    listening.ts    4 parts, scripts + question groups   (built-in free paper)
+    reading.ts      3 academic passages + 40 questions   (built-in free paper)
     writing.ts      2 tasks (chart spec for Task 1)
     speaking.ts     3 parts + cue card
+    cambridge/      real Cambridge book papers — separate tree, never mixed in
+      types.ts        layout, audio and source-notice types
+      c13-test1.ts    Test 1: Listening 1–40 and Reading 1–40, transcribed
+      c13-test1-writing-speaking.ts   Test 1: Writing + Speaking
+      c13-test2.ts    Test 2: Listening 1–40 and Reading 1–40, transcribed
+      c13-test2-writing-speaking.ts   Test 2: Writing + Speaking
+      tables.ts       table grids with {{n}} blanks inside cells
+      figures.ts      coordinates for the map/diagram line drawings
+      index.ts        registry — add the next test here
   lib/
     scoring.ts      band tables, CEFR mapping, answer matching, writing feedback
     storage.ts      localStorage history + draft checkpoints (per-user)
@@ -64,17 +83,22 @@ src/
     currentUser.ts  tracks who is signed in so storage keys are namespaced
     voices.ts       ranks installed voices so audio is not robotic
     audioManifest.ts  registers real recordings, falls back to speech
+    cambridgeStorage.ts  per-user history, drafts and reviews for book tests
   auth/             AuthProvider (Supabase session) + route guards
   components/       Layout, QuestionBlock, AudioPlayer, BarChart, ExamShell, Icons,
-                    StorageMigration
+                    StorageMigration, CambridgeGroup, CambridgeAudioPlayer,
+                    CambridgeFigures, CambridgeSourceNote
   pages/            Home, Login, Admin, ListeningExam, ReadingExam, WritingExam,
-                    SpeakingExam, Results, Progress, NotFound
+                    SpeakingExam, Results, Progress, NotFound,
+                    CambridgeHome, CambridgeListening, CambridgeReading,
+                    CambridgeWriting, CambridgeSpeaking, CambridgeResults
   hooks/            useCountdown
 supabase/
   setup.sql         tables, RLS policies, owner role, auto-profile trigger
 scripts/
-  preflight.mjs     checks credentials, build output and mobile assets
+  preflight.mjs     checks credentials, build output, mobile assets, Cambridge audio
   audio-manifest.mjs  scans public/audio/ and regenerates the manifest
+  check-cambridge.mjs validates numbering, layouts and answers against the key
 ```
 
 ## How marking works
@@ -189,6 +213,88 @@ src/pages/
   MlListening.tsx  MlReading.tsx  MlWriting.tsx  MlSpeaking.tsx
   MlResults.tsx    MlProgress.tsx
 ```
+
+## Cambridge book tests
+
+Alongside the built-in free paper, the app carries **real Cambridge IELTS test
+papers**, transcribed from the owner's own books. These live in
+`src/content/cambridge/` and are a separate content tree: they never mix with the
+built-in paper, the Multilevel exam, or each other's saved results.
+
+Currently included: **Cambridge IELTS 13 Academic · Tests 1 and 2** — all four
+skills in each. Tests 3 and 4 have not been transcribed yet.
+
+The catalogue already groups by book (`groupByBook` in
+`src/content/cambridge/types.ts`), so adding Book 14 or a General Training paper
+needs no page changes: register the tests in `CAMBRIDGE_TESTS` with their `book`
+and `module`, and the catalogue lists them under their own heading, newest book
+first, with a dashed "not yet" card for any tests still outstanding. Academic and
+General Training papers of the same book are kept in separate groups.
+
+| Skill | Material | Marking |
+| --- | --- | --- |
+| Listening | 4 sections, 40 questions, the real recordings | answer key → band |
+| Academic Reading | 3 full passages, 40 questions | answer key → band |
+| Writing | the book's Task 1 and Task 2 | heuristic estimate |
+| Speaking | the book's Part 1, cue card and Part 3 | self-assessment |
+
+Test 1's Task 1 is a map comparison; Test 2's is a bar chart, which the app
+redraws in SVG — its bar heights are approximate, so candidates read the
+figures and use phrases like *about* and *just under*.
+
+Question formats vary between tests, so the renderer has one layout per format
+the book uses: `list` (radio options), `compact` (dropdown against a shared
+letter/heading box), `table`, `flow`, `notes` (which also covers a labelled
+left-hand column and sub-headed note blocks), and `chooseTwo` for the
+*Choose TWO letters, A–E* pairs.
+
+### How to use it
+
+1. Sign in with your owner account.
+2. Tap **Cambridge** in the top menu (or the *Cambridge IELTS Books* card on the home page).
+3. Choose a skill: Listening, Reading, Writing or Speaking.
+4. Press play on the recording, answer the questions, press **Submit test**.
+5. The result is saved in that browser, and the answer review shows the correct
+   answer plus a short reason for every question.
+
+### Where the audio lives
+
+The recordings are **not in this repository**. They stay in the owner's Google
+Drive and the browser streams them:
+
+- 16 MP3s per book would add ~110 MB, which is far more than a static site
+  should carry, and the books are copyright material.
+- Each file must stay shared as **Anyone with the link**. The player tries three
+  Google hosts in turn and, if none respond, shows the drive preview plus the
+  one-line fix (`Share → General access → Anyone with the link`).
+- If a recording is missing, the section still opens and can be marked — only
+  the audio is unavailable.
+
+### Adding another test
+
+1. Transcribe the test into a new file under `src/content/cambridge/`, copying
+   the shape of `c13-test1.ts`.
+2. Register it in `src/content/cambridge/index.ts` (`CAMBRIDGE_TESTS`).
+3. Add the recording ids from Drive to each section's `audio` field.
+4. Add the official key for the new test to `scripts/check-cambridge.mjs`
+   (`KEY2_LISTENING` is the model) and push it onto the `SUITE` list.
+5. Run `npm run check:cambridge` — it verifies that questions 1–40 exist exactly
+   once, that every table/flow-chart/notes blank points at a real question, that
+   each answer is one of its own options, that *Choose TWO letters* pairs hold
+   two different letters from their own bank, and that every answer matches the
+   printed Cambridge key.
+
+No page code needs to change: the screens read the registry.
+
+### Copyright position
+
+The books are used for **private classroom teaching** only. Cambridge's own
+copyright page states that an individual teacher may make copies for use within
+his or her own classroom, which is the basis this material is held under. The
+app is therefore login-only, accounts are created by the owner, and every test
+page carries a **Source & permitted use** notice naming the book and stating the
+basis. Do not remove that notice, and do not publish the material outside the
+class.
 
 ## Access control (login)
 
@@ -326,19 +432,41 @@ runs full-screen, without an app store, an APK or an Xcode build.
 
 ### Installing it
 
-**Android (Chrome):** open the site → menu → **Add to Home screen / Install app**.
-You can also scan the deployed URL with **PWABuilder** to wrap it as an APK/AAB
-for the Play Store.
+**Android (Chrome):** open the site → menu (⋮) → **Install app** / **Add to Home
+screen**. If only "Add to Home screen" appears, the site is being offered as a
+plain shortcut rather than an installable app — check
+`chrome://serviceworker-internals` or DevTools → **Application → Manifest →
+Installability**, which names the unmet condition.
+
+There is **no APK file to download**, and there never was: this is a website
+that the browser installs. Android users should not look for an `.apk`. If a
+Play Store listing is ever wanted, the deployed URL can be wrapped with
+**PWABuilder** — that is a separate job with its own Google account steps.
 
 **iPhone / iPad (Safari):** open the site → **Share** → **Add to Home Screen**.
 (iOS does not allow the install prompt from Chrome — Safari only.)
 
-### Note on offline use
+### How the install works (and why it did not before)
 
-A service worker is **not** registered, so the app needs a connection to load.
-Adding one would cache the shell and make exams work offline; the trade-off is
-that you must remember to update the cache version on every deploy, otherwise
-users keep a stale build. Say the word and it can be added.
+Installing needs two things, and the app was missing both:
+
+1. **A service worker with a fetch handler.** Chrome on Android will not offer
+   **Install app** without one, even on a perfectly valid HTTPS site.
+   `public/sw.js` now provides it, registered from
+   `src/lib/registerServiceWorker.ts` in production builds only.
+2. **Real PNG files for the manifest icons.** Chrome only accepts file URLs
+   here; the manifest previously embedded the icons as base64 `data:` URLs.
+
+`npm run preflight` now fails if either one regresses.
+
+The worker caches the app shell and the hashed build assets, so a dropped
+connection no longer loses the page mid-exam. Page loads are **network first**,
+so a new deploy is picked up on the next online visit — there is no stale-build
+trap to remember. `CACHE_VERSION` in `public/sw.js` only needs bumping if the
+caching rules themselves change.
+
+Sign-in and the Google Drive recordings are deliberately **not** cached: they
+are cross-origin and are always fetched live.
 
 ## Publishing (GitHub Pages)
 

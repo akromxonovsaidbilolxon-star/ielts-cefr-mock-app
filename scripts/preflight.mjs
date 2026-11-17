@@ -7,7 +7,7 @@
  * and the mobile assets.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const C = {
@@ -141,6 +141,8 @@ if (!existsSync('dist/index.html')) {
 section('4. Mobile assets');
 const required = [
   'dist/manifest.webmanifest',
+  // Chrome will not offer "Install app" without a worker that fetches.
+  'dist/sw.js',
   'dist/icons/icon-192.png',
   'dist/icons/icon-512.png',
   'dist/icons/icon-maskable-512.png',
@@ -148,6 +150,7 @@ const required = [
 ];
 const inSource = {
   'dist/manifest.webmanifest': 'public/manifest.webmanifest',
+  'dist/sw.js': 'public/sw.js',
   'dist/icons/icon-192.png': 'public/icons/icon-192.png',
   'dist/icons/icon-512.png': 'public/icons/icon-512.png',
   'dist/icons/icon-maskable-512.png': 'public/icons/icon-maskable-512.png',
@@ -176,7 +179,69 @@ if (existsSync('dist/index.html')) {
   }
 }
 
-section('5. HTTPS check');
+/* Android installability: manifest icons must be real files Chrome can fetch,
+   and the worker must actually handle fetch events. Both were missing and are
+   the reason "Install app" never appeared on Android. */
+if (existsSync('public/manifest.webmanifest')) {
+  try {
+    const manifest = JSON.parse(readFileSync('public/manifest.webmanifest', 'utf8'));
+    const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
+    const sizes = new Set(icons.map((i) => i.sizes));
+    const dataUrls = icons.filter((i) => String(i.src ?? '').startsWith('data:'));
+    if (sizes.has('192x192') && sizes.has('512x512')) ok('manifest declares 192x192 and 512x512 icons');
+    else bad('manifest is missing a 192x192 or 512x512 icon — Chrome will not offer install');
+    if (icons.some((i) => i.purpose === 'maskable')) ok('manifest has a maskable icon for Android');
+    else warn('no maskable icon — Android will letterbox the icon');
+    if (dataUrls.length) {
+      bad(`${dataUrls.length} manifest icon(s) are base64 data URLs — Chrome only accepts real files`);
+    } else {
+      ok('manifest icons are real files, not data URLs');
+    }
+  } catch {
+    warn('Could not parse public/manifest.webmanifest.');
+  }
+}
+
+if (existsSync('public/sw.js')) {
+  const sw = readFileSync('public/sw.js', 'utf8');
+  if (/addEventListener\(\s*['"]fetch['"]/.test(sw)) ok('service worker handles fetch events');
+  else bad('sw.js has no fetch handler — Chrome treats the app as not installable');
+  const version = /CACHE_VERSION\s*=\s*['"]([^'"]+)['"]/.exec(sw);
+  if (version) ok(`service worker cache version: ${version[1]}`);
+  else warn('sw.js has no CACHE_VERSION to bump when caching changes');
+}
+
+section('5. Cambridge book material');
+if (existsSync('src/content/cambridge/index.ts')) {
+  ok('Cambridge content tree present');
+  info('Recordings are streamed from the owner\'s Google Drive, so they are not in dist/.');
+  info('Each book file must stay shared as "Anyone with the link".');
+
+  // A Drive recording that lost its sharing is the failure mode that silently
+  // breaks a listening test, so check the ids are at least well formed.
+  try {
+    const files = readdirSync('src/content/cambridge').filter((f) => /^c13-test\d+\.ts$/.test(f));
+    let total = 0;
+    for (const file of files) {
+      const src = readFileSync(`src/content/cambridge/${file}`, 'utf8');
+      const ids = [...src.matchAll(/driveId:\s*'([^']+)'/g)].map((m) => m[1]);
+      if (ids.length === 4) ok(`${file}: 4 Drive recordings registered`);
+      else warn(`${file}: ${ids.length} Drive recordings — expected 4 per test`);
+      for (const id of ids) {
+        total += 1;
+        if (!/^[A-Za-z0-9_-]{20,}$/.test(id)) bad(`Drive id looks malformed: ${id}`);
+      }
+    }
+    info(`${files.length} Cambridge test file(s) · ${total} recordings in total`);
+  } catch {
+    warn('Could not read the Cambridge listening content.');
+  }
+  info('Run npm run check:cambridge to verify every answer against the printed key.');
+} else {
+  warn('No Cambridge content yet.');
+}
+
+section('6. HTTPS check');
 info('Sign-in and the microphone recorder need HTTPS (or localhost).');
 info('GitHub Pages, Netlify, Vercel and Cloudflare Pages all provide it.');
 info('A LAN address like http://192.168.x.x does NOT — iOS disables Web Crypto there.');

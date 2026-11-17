@@ -1700,3 +1700,477 @@ input, textarea, select {
 
 /* Results band table highlight */
 .table tr[style*="brand-light"] td { font-weight: 600; }
+
+/* ==================================================================
+   Cambridge book tests
+   ------------------------------------------------------------------
+   Reading and listening papers are transcriptions of a printed book,
+   so they need denser layouts than the built-in free paper: table
+   grids, flow charts, boxes of lettered choices and compact dropdown
+   rows. Everything here stays inside the existing design tokens.
+   ================================================================== */
+
+/* ---------------- attribution notice ---------------- */
+
+.csource {
+  margin: 0.9rem 0 0.2rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.csource p { margin: 0.35rem 0 0; }
+.csource-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.csource-sm {
+  margin: 0.7rem 0 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.76rem;
+  border-left-width: 2px;
+}
+
+/* ---------------- group furniture ---------------- */
+
+.cgroup-title {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--brand);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------------- inline blanks ---------------- */
+
+.cblank { display: inline-flex; align-items: baseline; gap: 0.3rem; }
+.cblank-input {
+  width: 8.5rem;
+  max-width: 52%;
+  padding: 0.22rem 0.45rem;
+  font-size: 0.88rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  font-family: inherit;
+}
+.cblank-sm .cblank-input { width: 4.6rem; }
+.cblank-input:focus { outline: 2px solid var(--brand-light); border-color: var(--brand); }
+.cblank-key {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--bad);
+  white-space: nowrap;
+}
+.cblank-written {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-style: italic;
+}
+
+/* ---------------- table layout ---------------- */
+
+.ctable-wrap { overflow-x: auto; margin: 0.5rem 0 0.4rem; }
+.ctable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+  background: #fff;
+}
+.ctable th,
+.ctable td {
+  border: 1px solid var(--border-strong);
+  padding: 0.5rem 0.6rem;
+  vertical-align: top;
+  line-height: 1.55;
+}
+.ctable th {
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  font-size: 0.82rem;
+  text-align: left;
+}
+.ctable td:first-child { font-weight: 600; }
+.ctable em { color: var(--muted); font-style: italic; font-weight: 400; }
+
+/* ---------------- choice box ---------------- */
+
+.cbox {
+  margin: 0.7rem 0 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #fff;
+}
+.cbox-title {
+  padding: 0.45rem 0.7rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--brand-dark);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+.cbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 0.15rem 1rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.86rem;
+}
+.cbox-item { display: flex; gap: 0.45rem; align-items: baseline; }
+.cbox-letter {
+  font-weight: 800;
+  color: var(--brand);
+  min-width: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ---------------- flow chart ---------------- */
+
+.cflow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  margin: 0.9rem 0;
+}
+.cflow-step {
+  width: 100%;
+  max-width: 520px;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 0.87rem;
+  line-height: 1.5;
+  text-align: center;
+}
+.cflow-step-q { border-color: var(--brand); background: var(--brand-light); }
+.cflow-arrow { color: var(--brand); font-size: 0.8rem; line-height: 1.1; }
+.cflow-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.cflow-num {
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+.cflow-select .input {
+  padding: 0.18rem 0.35rem;
+  font-size: 0.85rem;
+  border-radius: 5px;
+  font-weight: 700;
+}
+.cflow-text { text-align: left; }
+.cflow-text-plain { text-align: center; }
+
+/* ---------------- compact rows (dropdown per answer) ---------------- */
+
+.ccompact { display: flex; flex-direction: column; }
+.ccompact-row {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+.ccompact-row:last-child { border-bottom: 0; }
+.ccompact-prompt { font-size: 0.9rem; line-height: 1.45; }
+.ccompact-select {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: auto;
+  min-width: 4.2rem;
+  border-radius: 6px;
+}
+
+/* ---------------- pill selectors (TRUE/FALSE/NOT GIVEN etc.) ---------------- */
+
+.cselect-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
+.cpill {
+  padding: 0.3rem 0.7rem;
+  border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.cpill:hover:not(:disabled) { background: var(--brand-light); border-color: var(--brand); }
+.cpill.selected { background: var(--brand); border-color: var(--brand); color: #fff; }
+.cpill.correct-opt { background: var(--ok-light); border-color: var(--ok); color: var(--ok); }
+.cpill.incorrect-opt { background: var(--bad-light); border-color: var(--bad); color: var(--bad); }
+.cpill:disabled { cursor: default; }
+
+/* ---------------- notes layout ---------------- */
+
+.cnotes { display: flex; flex-direction: column; }
+.cnote-row {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr);
+  gap: 0.55rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+.cnote-row:last-child { border-bottom: 0; }
+.cnote-prompt { font-size: 0.9rem; line-height: 1.65; }
+.cnote-review { margin-top: 0.35rem; display: flex; flex-wrap: wrap; align-items: baseline; }
+
+/* ---------------- figures ---------------- */
+
+.cfigure {
+  margin: 0.9rem 0 0.2rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.cfigure-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--brand);
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+.cfigure-svg { display: block; width: 100%; height: auto; max-width: 440px; margin: 0 auto; }
+.cfigure-note {
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--faint);
+  text-align: center;
+}
+.cmap-row { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+.cmap-panel { flex: 1 1 210px; max-width: 300px; }
+.cmap-year {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--brand-dark);
+  margin-bottom: 0.3rem;
+}
+
+/* ---------------- audio ---------------- */
+
+.caudio-seek {
+  flex: 1;
+  min-width: 90px;
+  accent-color: var(--brand);
+  height: 7px;
+}
+
+/* ---------------- writing ---------------- */
+
+.wtextarea {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  font-family: var(--font-reading);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: #fff;
+}
+
+/* ---------------- small screens ---------------- */
+
+@media (max-width: 640px) {
+  .ctable { font-size: 0.8rem; }
+  .ctable th, .ctable td { padding: 0.4rem 0.45rem; }
+  .cblank-input { width: 6.2rem; max-width: 60%; }
+  .cbox-grid { grid-template-columns: 1fr; font-size: 0.82rem; }
+  .ccompact-row { grid-template-columns: 1.6rem minmax(0, 1fr) auto; }
+  .ccompact-row .cblank-key { grid-column: 2 / -1; }
+  .cflow-step { font-size: 0.83rem; padding: 0.5rem 0.6rem; }
+  .wtextarea { min-height: 240px; font-size: 0.92rem; }
+  .caudio-seek { min-width: 60px; }
+}
+
+/* ---------------- labelled notes (Reading Passage 1 style) ---------------- */
+
+.cnotes-labels {
+  width: 100%;
+  border-collapse: collapse;
+}
+.cnotes-labels .cnotes-line td,
+.cnotes-labels .cnotes-line th {
+  padding: 0.42rem 0;
+  vertical-align: top;
+  border-bottom: 1px dashed var(--border);
+}
+.cnotes-labels .cnotes-line:last-child td,
+.cnotes-labels .cnotes-line:last-child th { border-bottom: 0; }
+.cnotes-labels .cnotes-label {
+  width: 9.5rem;
+  padding-right: 0.9rem;
+  text-align: left;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+.cnotes-cell { font-size: 0.9rem; line-height: 1.6; }
+.cnotes-bullet { position: relative; padding-left: 0.9rem; }
+.cnotes-bullet::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--faint);
+}
+.cnotes-subhead-row td { padding: 0.85rem 0 0.3rem; }
+.cnotes-subhead {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--brand);
+  letter-spacing: 0.01em;
+}
+.cnotes-section + .cnotes-section { margin-top: 0.5rem; }
+.cnotes-section .cnotes-subhead { padding: 0.75rem 0 0.15rem; }
+.cnotes-labels .cnote-review,
+.cnotes-section .cnote-review { display: block; }
+
+/* ---------------- choose TWO letters (one bank per answer pair) -------- */
+
+.cpairs { display: flex; flex-direction: column; gap: 1.15rem; }
+.cpair {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.cpair-head {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--brand);
+  margin-bottom: 0.3rem;
+}
+.cpair-stem {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+.cpair-stem .q-num { width: auto; }
+.cpair-bank { display: flex; flex-direction: column; gap: 0.3rem; }
+.cpair-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.cpair-opt:hover:not(:has(input:disabled)) { background: var(--brand-light); border-color: var(--brand); }
+.cpair-opt input { margin: 0.15rem 0 0; accent-color: var(--brand); }
+.cpair-opt.selected { background: var(--brand-light); border-color: var(--brand); }
+.cpair-opt.correct-opt { background: var(--ok-light); border-color: var(--ok); }
+.cpair-opt.incorrect-opt { background: var(--bad-light); border-color: var(--bad); }
+.cpair-opt .cbox-letter { margin: 0; }
+.cpair-slots {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--border);
+}
+.cpair-slot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.18rem 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 99px;
+  font-size: 0.85rem;
+  color: var(--faint);
+  min-width: 4.2rem;
+}
+.cpair-slot.filled { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+.cpair-slot .q-num { width: auto; }
+.cpair-slot b { font-weight: 800; }
+
+@media (max-width: 640px) {
+  .cnotes-labels .cnotes-label { width: 6.5rem; padding-right: 0.6rem; font-size: 0.78rem; }
+  .cpair { padding: 0.8rem 0.7rem; }
+  .cpair-stem { grid-template-columns: 3rem minmax(0, 1fr); }
+}
+
+/* ---------------- install banner (Android / desktop Chrome) ------------- */
+
+.install-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--brand-light);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.install-icon {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 1rem;
+  flex: none;
+}
+.install-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+  flex: 1;
+}
+.install-text b { font-size: 0.86rem; }
+.install-bar .btn { flex: none; }
+
+@media (max-width: 420px) {
+  .install-bar { padding: 0.5rem 0.6rem; gap: 0.45rem; }
+  .install-text .tiny { display: none; }
+}
+
+/* ---------------- catalogue: tests still to be transcribed ------------- */
+
+.skill-card-pending {
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+}
+.skill-card-pending h3,
+.skill-card-pending p { color: var(--faint); }
+.skill-icon-pending { background: var(--border); color: var(--faint); }
