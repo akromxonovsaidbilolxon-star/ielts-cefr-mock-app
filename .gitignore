@@ -17,3 +17,7 @@ dist-ssr
 google_drive/
 .work/
 .tmpcheck/
+
+# Generated Cambridge content SQL — contains verbatim book text and is loaded
+# into Supabase instead of being committed. Regenerate with npm run export:cambridge.
+supabase/generated/

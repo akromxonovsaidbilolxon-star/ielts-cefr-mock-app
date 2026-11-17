@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getCambridgeTest, readingQuestions } from '../content/cambridge';
+import { Link, useNavigate } from 'react-router-dom';
+import { readingQuestions } from '../content/cambridge';
+import type { CambridgeTest } from '../content/cambridge/types';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { countCorrect, readingBand } from '../lib/scoring';
 import {
   clearCambridgeDraft,
@@ -18,10 +20,8 @@ import { CheckIcon } from '../components/Icons';
 const TOTAL_SECONDS = 60 * 60;
 const TOTAL_QUESTIONS = 40;
 
-export default function CambridgeReading() {
-  const { testId } = useParams();
+function CambridgeReadingInner({ test }: { test: CambridgeTest }) {
   const navigate = useNavigate();
-  const test = getCambridgeTest(testId);
 
   const [answers, setAnswers] = useState<Answers>({});
   const [passageIndex, setPassageIndex] = useState(0);
@@ -224,5 +224,13 @@ export default function CambridgeReading() {
         </aside>
       </div>
     </>
+  );
+}
+
+export default function CambridgeReading() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeReadingInner test={test} />}
+    </CambridgeLoader>
   );
 }

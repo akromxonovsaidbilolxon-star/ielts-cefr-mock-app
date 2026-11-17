@@ -1,3 +1,4 @@
+import { GRANFORD } from './figures-db';
 import type { CambridgeSection, CambridgePassage } from './types';
 import { COOKERY_TABLE, TOURISM_TABLE } from './tables';
 
@@ -169,6 +170,7 @@ export const C13_T1_LISTENING: CambridgeSection[] = [
         title: 'Proposed traffic changes in Granford',
         layout: 'compact',
         figure: 'granford',
+        figureSpec: GRANFORD,
         box: {
           title: 'Map key',
           items: [

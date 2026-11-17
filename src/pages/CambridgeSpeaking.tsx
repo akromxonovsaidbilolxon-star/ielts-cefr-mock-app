@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getCambridgeTest } from '../content/cambridge';
+import { Link, useNavigate } from 'react-router-dom';
+import type { CambridgeTest } from '../content/cambridge/types';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { saveCambridgeScore } from '../lib/cambridgeStorage';
 import { formatClock } from '../hooks/useCountdown';
 import CambridgeSourceNote from '../components/CambridgeSourceNote';
@@ -8,10 +9,8 @@ import { ClockIcon, MicIcon, PlayIcon, StopIcon } from '../components/Icons';
 
 type Phase = 'idle' | 'prep' | 'speak' | 'done';
 
-export default function CambridgeSpeaking() {
-  const { testId } = useParams();
+function CambridgeSpeakingInner({ test }: { test: CambridgeTest }) {
   const navigate = useNavigate();
-  const test = getCambridgeTest(testId);
   const parts = test?.speaking ?? [];
 
   const [partIndex, setPartIndex] = useState(0);
@@ -397,5 +396,13 @@ export default function CambridgeSpeaking() {
         </aside>
       </div>
     </>
+  );
+}
+
+export default function CambridgeSpeaking() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeSpeakingInner test={test} />}
+    </CambridgeLoader>
   );
 }

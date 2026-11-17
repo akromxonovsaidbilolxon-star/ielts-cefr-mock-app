@@ -237,6 +237,19 @@ if (existsSync('src/content/cambridge/index.ts')) {
     warn('Could not read the Cambridge listening content.');
   }
   info('Run npm run check:cambridge to verify every answer against the printed key.');
+
+  // The passages must never be compiled into the public bundle.
+  if (existsSync('supabase/cambridge-content.sql')) {
+    ok('cambridge_tests schema present');
+  } else {
+    bad('supabase/cambridge-content.sql is missing — the book text has nowhere to load into.');
+  }
+  if (existsSync('supabase/generated/cambridge-content.sql')) {
+    warn('Generated content SQL is present. Load it into Supabase, then it can be deleted.');
+  } else {
+    info('Run npm run export:cambridge to regenerate the SQL that seeds cambridge_tests.');
+  }
+  info('Run npm run check:bundle to prove no book text reached dist/.');
 } else {
   warn('No Cambridge content yet.');
 }

@@ -1,6 +1,9 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CAMBRIDGE_TESTS, getCambridgeTest, groupByBook } from '../content/cambridge';
+import { groupByBook } from '../content/cambridge';
+import type { CambridgeTest } from '../content/cambridge/types';
+import { loadCambridgeSummaries, type CambridgeSummary } from '../lib/cambridgeContent';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { bandToCefr } from '../lib/scoring';
 import { loadCambridgeHistory, latestForTest, bestForTest, type CambridgeScore } from '../lib/cambridgeStorage';
 import type { Skill } from '../types';
@@ -49,9 +52,7 @@ const SKILL_META: {
   },
 ];
 
-export default function CambridgeHome() {
-  const { testId } = useParams();
-  const test = getCambridgeTest(testId);
+function CambridgeHomeInner({ test }: { test: CambridgeTest }) {
   const [history, setHistory] = useState<CambridgeScore[]>([]);
 
   useEffect(() => {
@@ -215,8 +216,50 @@ export default function CambridgeHome() {
  * plainly, rather than pretending the book is complete.
  */
 export function CambridgeIndex() {
-  const books = groupByBook(CAMBRIDGE_TESTS);
-  const totalTests = CAMBRIDGE_TESTS.length;
+  const [summaries, setSummaries] = useState<CambridgeSummary[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCambridgeSummaries()
+      .then((rows) => {
+        if (!cancelled) setSummaries(rows);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load the catalogue.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="callout callout-warn">
+        <div className="callout-title">Could not load the Cambridge catalogue</div>
+        <p style={{ marginBottom: 0 }}>{error}</p>
+      </div>
+    );
+  }
+
+  if (!summaries) {
+    return (
+      <div className="boot-screen">
+        <div className="boot-mark">IE</div>
+        <div className="muted small">Loading tests…</div>
+      </div>
+    );
+  }
+
+  // The catalogue only needs id/book/test/label/module. `groupByBook` reads
+  // `source.bookTitle` for the heading, so supply it from the label.
+  const catalogue = summaries.map((row) => ({
+    ...row,
+    source: { bookTitle: `Cambridge IELTS ${row.book}` },
+  })) as unknown as CambridgeTest[];
+
+  const books = groupByBook(catalogue);
+  const totalTests = summaries.length;
   const testsPerBook = 4;
 
   return (
@@ -325,5 +368,13 @@ export function CambridgeIndex() {
         </Link>
       </div>
     </>
+  );
+}
+
+export default function CambridgeHome() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeHomeInner test={test} />}
+    </CambridgeLoader>
   );
 }

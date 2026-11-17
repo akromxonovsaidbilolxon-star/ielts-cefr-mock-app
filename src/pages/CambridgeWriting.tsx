@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getCambridgeTest } from '../content/cambridge';
+import { Link, useNavigate } from 'react-router-dom';
+import type { CambridgeTest } from '../content/cambridge/types';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { assessWriting } from '../lib/scoring';
 import {
   loadCambridgeDraft,
@@ -12,15 +13,12 @@ import { ProgressCard, TimerCard } from '../components/ExamShell';
 import CambridgeSourceNote from '../components/CambridgeSourceNote';
 import { HospitalMaps } from '../components/CambridgeFigures';
 import BarChart from '../components/BarChart';
-import { HOSPITAL_MAPS } from '../content/cambridge/figures';
 import { CheckIcon } from '../components/Icons';
 
 const TOTAL_SECONDS = 60 * 60;
 
-export default function CambridgeWriting() {
-  const { testId } = useParams();
+function CambridgeWritingInner({ test }: { test: CambridgeTest }) {
   const navigate = useNavigate();
-  const test = getCambridgeTest(testId);
 
   const tasks = test ? [test.writing.task1, test.writing.task2] : [];
 
@@ -153,7 +151,7 @@ export default function CambridgeWriting() {
             </div>
             <p style={{ marginTop: '0.7rem', whiteSpace: 'pre-line' }}>{task.prompt}</p>
 
-            {task.figure === 'hospital-maps' && <HospitalMaps panels={HOSPITAL_MAPS.panels} />}
+            {task.figure === 'hospital-maps' && task.figurePanels && <HospitalMaps panels={task.figurePanels} />}
             {task.chart && (
               <div style={{ marginTop: '0.9rem' }}>
                 <BarChart spec={task.chart} />
@@ -228,5 +226,13 @@ export default function CambridgeWriting() {
         </aside>
       </div>
     </>
+  );
+}
+
+export default function CambridgeWriting() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeWritingInner test={test} />}
+    </CambridgeLoader>
   );
 }

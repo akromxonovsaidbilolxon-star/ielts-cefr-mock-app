@@ -70,6 +70,19 @@ export interface CambridgeGroup {
   pairs?: { heading: string; prompt: string; answers: number[] }[];
   /** Named inline figure to draw above the questions. */
   figure?: 'granford';
+  /**
+   * Geometry for that figure. It ships with the test from the database rather
+   * than being imported by the renderer, because the drawing reproduces the
+   * book's map and must not be compiled into the public bundle.
+   */
+  figureSpec?: {
+    title: string;
+    alt: string;
+    viewBox: string;
+    letters: { letter: string; x: number; y: number }[];
+    boxes: { x: number; y: number; w: number; h: number; label: string; bold?: boolean }[];
+    streetLabels: { text: string; x: number; y: number; rotate: number }[];
+  };
 }
 
 /** Where a real recording lives. Files stay in the owner's Google Drive. */
@@ -101,6 +114,16 @@ export interface CambridgePassage {
 /** Writing task plus the inline figure this book's Task 1 uses. */
 export interface CambridgeWritingTask extends WritingTask {
   figure?: 'hospital-maps';
+  /** Panels for the hospital plans, carried with the test from the database. */
+  figurePanels?: {
+    year: string;
+    caption: string;
+    busStops: { x: number; y: number }[];
+    roundabouts: { x: number; y: number }[];
+    hospital: { x: number; y: number; w: number; h: number };
+    carPark: { x: number; y: number; w: number; h: number; label: string };
+    busStation: { x: number; y: number; w: number; h: number } | null;
+  }[];
 }
 
 export interface CambridgeSource {

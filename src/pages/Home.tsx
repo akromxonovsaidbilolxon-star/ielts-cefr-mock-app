@@ -9,7 +9,8 @@ import {
   scoreToAward,
   awardLabel,
 } from '../lib/multilevel';
-import { CAMBRIDGE_TESTS, groupByBook } from '../content/cambridge';
+import { groupByBook } from '../content/cambridge';
+import { loadCambridgeSummaries } from '../lib/cambridgeContent';
 import type { Attempt, Skill } from '../types';
 import {
   ArrowRightIcon,
@@ -68,6 +69,29 @@ const SKILLS: {
 ];
 
 export default function Home() {
+  // The Cambridge catalogue lives in Supabase, so the card footer counts what
+  // is actually published rather than what happens to be compiled in.
+  const [catalogueCount, setCatalogueCount] = useState(0);
+  const [catalogueBooks, setCatalogueBooks] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCambridgeSummaries()
+      .then((rows) => {
+        if (cancelled) return;
+        setCatalogueCount(rows.length);
+        setCatalogueBooks(
+          groupByBook(rows.map((r) => ({ ...r, source: { bookTitle: '' } })) as never).length,
+        );
+      })
+      .catch(() => {
+        /* The card still works without a count — leave the footers at 0. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [mlOverall, setMlOverall] = useState<number | null>(null);
   const [mlAward, setMlAward] = useState<string | null>(null);
@@ -192,9 +216,9 @@ export default function Home() {
             </p>
             <div className="skill-card-foot">
               <span>
-                {CAMBRIDGE_TESTS.length} test{CAMBRIDGE_TESTS.length === 1 ? '' : 's'} ·{' '}
-                {groupByBook(CAMBRIDGE_TESTS).length} book
-                {groupByBook(CAMBRIDGE_TESTS).length === 1 ? '' : 's'}
+                {catalogueCount} test{catalogueCount === 1 ? '' : 's'} ·{' '}
+                {catalogueBooks} book
+                {catalogueBooks === 1 ? '' : 's'}
               </span>
               <span className="skill-go">Open →</span>
             </div>

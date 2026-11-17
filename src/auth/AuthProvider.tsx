@@ -16,6 +16,7 @@ import {
   type Profile,
   type Role,
 } from '../lib/supabase';
+import { clearCambridgeCache } from '../lib/cambridgeContent';
 import { setCurrentUserId } from '../lib/currentUser';
 
 export interface AuthUser {
@@ -175,6 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (isConfigured) await getSupabase().auth.signOut();
+    // Drop any Cambridge test that was fetched while signed in, so the next
+    // account cannot be served the previous one's cached book text.
+    clearCambridgeCache();
     setCurrentUserId(null);
     setUser(null);
   }, []);

@@ -1,6 +1,6 @@
 import type { CambridgeWritingTask } from './types';
 import type { SpeakingPart } from '../../types';
-import { ENGLAND_WALES_TENURE } from './figures';
+import { ENGLAND_WALES_TENURE } from './figures-db';
 
 /* ================================================================== */
 /* WRITING — Cambridge IELTS 13, Test 2 (Academic)                    */

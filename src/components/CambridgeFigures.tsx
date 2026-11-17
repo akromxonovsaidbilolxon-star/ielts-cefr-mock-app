@@ -1,17 +1,28 @@
-import { GRANFORD } from '../content/cambridge/figures';
+import type { FigureBox } from '../content/cambridge/figures';
 
 /**
  * Line drawing of "Proposed traffic changes in Granford" — a simplified
  * redrawing of the map printed in the book, showing only the roads, buildings
  * and the nine lettered positions (A–I) the questions refer to.
  */
-export function GranfordMap() {
-  const { viewBox, letters, boxes, streetLabels } = GRANFORD;
+interface GranfordSpec {
+  /** Printed title of the map, carried with the test content. */
+  title: string;
+  /** Accessible description, also carried with the content. */
+  alt: string;
+  viewBox: string;
+  letters: { letter: string; x: number; y: number }[];
+  boxes: FigureBox[];
+  streetLabels: { text: string; x: number; y: number; rotate: number }[];
+}
+
+export function GranfordMap({ spec }: { spec: GranfordSpec }) {
+  const { title, alt, viewBox, letters, boxes, streetLabels } = spec;
 
   return (
     <div className="cfigure">
-      <div className="cfigure-title">Proposed traffic changes in Granford</div>
-      <svg viewBox={viewBox} className="cfigure-svg" role="img" aria-label="Map of Granford: Station Road, High Street and School Road with locations A to I">
+      <div className="cfigure-title">{title}</div>
+      <svg viewBox={viewBox} className="cfigure-svg" role="img" aria-label={alt}>
         {/* frame */}
         <rect x="28" y="20" width="304" height="252" fill="#fff" stroke="#0f172a" strokeWidth="1.6" />
 

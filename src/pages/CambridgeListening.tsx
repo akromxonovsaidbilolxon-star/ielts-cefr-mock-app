@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getCambridgeTest, listeningQuestions } from '../content/cambridge';
+import { Link, useNavigate } from 'react-router-dom';
+import { listeningQuestions } from '../content/cambridge';
+import type { CambridgeTest } from '../content/cambridge/types';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { listeningBand, countCorrect } from '../lib/scoring';
 import {
   clearCambridgeDraft,
@@ -20,10 +22,8 @@ import { CheckIcon } from '../components/Icons';
 const TOTAL_SECONDS = 30 * 60;
 const TOTAL_QUESTIONS = 40;
 
-export default function CambridgeListening() {
-  const { testId } = useParams();
+function CambridgeListeningInner({ test }: { test: CambridgeTest }) {
   const navigate = useNavigate();
-  const test = getCambridgeTest(testId);
 
   const [answers, setAnswers] = useState<Answers>({});
   const [section, setSection] = useState(0);
@@ -188,7 +188,7 @@ export default function CambridgeListening() {
           <div style={{ marginTop: '1rem' }}>
             {active.groups.map((group) => (
               <div key={group.id}>
-                {group.figure === 'granford' && <GranfordMap />}
+                {group.figure === 'granford' && group.figureSpec && <GranfordMap spec={group.figureSpec} />}
                 <CambridgeGroupBlock group={group} answers={answers} onChange={setAnswer} />
               </div>
             ))}
@@ -235,5 +235,13 @@ export default function CambridgeListening() {
         </aside>
       </div>
     </>
+  );
+}
+
+export default function CambridgeListening() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeListeningInner test={test} />}
+    </CambridgeLoader>
   );
 }

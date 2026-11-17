@@ -138,17 +138,30 @@ function sourceOf(file) {
 section('1. Content files present');
 
 const files = readdirSync(dir);
-for (const need of ['types.ts', 'index.ts', 'c13-test1.ts', 'tables.ts', 'figures.ts']) {
+for (const need of [
+  'types.ts',
+  'index.ts',
+  'registry.ts',
+  'c13-test1.ts',
+  'c13-test2.ts',
+  'c13-test3.ts',
+  'figures.ts',
+  'figures-db.ts',
+]) {
   if (files.includes(need)) ok(need);
   else bad(`${need} is missing`);
 }
 
-/* The content is TypeScript; strip the types so plain node can read it. */
+/*
+ * The tests are no longer re-exported from index.ts — that barrel is now
+ * helper-only so the browser bundle cannot pull book text in. The tests are
+ * loaded from a dedicated entry point instead, which exists purely for this
+ * script and for `npm run export:cambridge`.
+ */
 async function loadTest() {
   const { execSync } = await import('node:child_process');
-  // Bundle just the content module to a temporary ES module.
   execSync(
-    './node_modules/.bin/esbuild src/content/cambridge/index.ts --bundle --format=esm --outfile=/tmp/cam-content.mjs --log-level=error',
+    './node_modules/.bin/esbuild src/content/cambridge/registry.ts --bundle --format=esm --outfile=/tmp/cam-content.mjs --log-level=error',
     { stdio: 'inherit' },
   );
   return import(`file:///tmp/cam-content.mjs?t=${Date.now()}`);
@@ -164,7 +177,7 @@ try {
 }
 
 if (!mod.C13_TEST1) {
-  bad('C13_TEST1 is not exported from index.ts');
+  bad('C13_TEST1 is not exported from registry.ts');
   process.exit(1);
 }
 

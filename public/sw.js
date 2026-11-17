@@ -16,11 +16,14 @@
  *     copy for that filename.
  *   - Everything cross-origin (Supabase, Google Drive audio): untouched.
  *
- * CACHE_VERSION must be bumped whenever the caching rules below change. It does
+ * CACHE_VERSION must be bumped whenever the caching rules below change, and
+ * whenever the app stops shipping content that was previously cached. It was
+ * moved to v2 when Cambridge book text left the bundle: an installed app must
+ * not keep serving the old, content-bearing JavaScript from cache. It does
  * NOT need bumping for normal deploys, because asset filenames are hashed.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_PREFIX = 'ielts-mock';
 const ASSET_CACHE = `${CACHE_PREFIX}-assets-${CACHE_VERSION}`;
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${CACHE_VERSION}`;

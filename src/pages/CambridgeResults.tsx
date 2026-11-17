@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
-  getCambridgeTest,
   listeningGroups,
   readingGroups,
   listeningQuestions,
   readingQuestions,
 } from '../content/cambridge';
+import type { CambridgeTest } from '../content/cambridge/types';
+import CambridgeLoader from '../components/CambridgeLoader';
 import { bandToCefr, CEFR_DESCRIPTIONS, isCorrect } from '../lib/scoring';
 import {
   loadCambridgeHistory,
@@ -31,11 +32,9 @@ interface WritingReport {
   texts: Record<string, string>;
 }
 
-export default function CambridgeResults() {
-  const { testId } = useParams();
+function CambridgeResultsInner({ test }: { test: CambridgeTest }) {
   const [params] = useSearchParams();
   const focus = (params.get('skill') as Skill | null) ?? null;
-  const test = getCambridgeTest(testId);
 
   const [tab, setTab] = useState<'scores' | 'review'>('scores');
 
@@ -329,5 +328,13 @@ export default function CambridgeResults() {
         </Link>
       </div>
     </>
+  );
+}
+
+export default function CambridgeResults() {
+  return (
+    <CambridgeLoader>
+      {(test) => <CambridgeResultsInner test={test} />}
+    </CambridgeLoader>
   );
 }

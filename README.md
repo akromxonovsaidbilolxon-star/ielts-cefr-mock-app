@@ -226,6 +226,29 @@ built-in paper, the Multilevel exam, or each other's saved results.
 Currently included: **Cambridge IELTS 13 Academic · Tests 1, 2 and 3** — all
 four skills in each. Test 4 has not been transcribed yet.
 
+### Where the book text lives
+
+The transcribed tests are **not** compiled into the app. They live in the
+`cambridge_tests` table in Supabase and are fetched at run time, so an
+unauthenticated visitor never receives a single passage.
+
+| Stage | Command | What it does |
+| --- | --- | --- |
+| 1 | `npm run check:cambridge` | verify every answer against the printed key |
+| 2 | `npm run export:cambridge` | write `supabase/generated/cambridge-content.sql` |
+| 3 | paste that file into Supabase → SQL Editor | seed/refresh the table |
+| 4 | `npm run build` then `npm run check:bundle` | prove no book text reached `dist/` |
+
+Set up the table once with `supabase/cambridge-content.sql`. Row Level Security
+grants `select` only to signed-in accounts whose profile is `active`; the
+`anon` role has no access at all.
+
+This split exists because the passages used to sit in `index-*.js`, where
+anyone could read them without signing in. The source `.ts` files remain in the
+repo as the input to step 2, but only `registry.ts` imports them — and nothing
+the browser loads imports `registry.ts`. `check:bundle` fails the build if that
+ever changes.
+
 The catalogue already groups by book (`groupByBook` in
 `src/content/cambridge/types.ts`), so adding Book 14 or a General Training paper
 needs no page changes: register the tests in `CAMBRIDGE_TESTS` with their `book`

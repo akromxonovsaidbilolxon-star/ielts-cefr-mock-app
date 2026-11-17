@@ -11,7 +11,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
     paragraphs: [
       {
         label: 'A',
-        text: 'For four hundred years, the Eurasian beaver was absent from most of Britain. Hunted relentlessly for its fur, meat and a secretion known as castoreum, which was prized in medicine, the animal had disappeared from England and Wales by the sixteenth century and from Scotland by the seventeenth. Only a handful of scattered reintroductions in continental Europe kept the species from complete regional extinction. Then, in 2009, a small number of beavers was released in Knapdale Forest in Argyll, Scotland, as part of a carefully monitored official trial. The animals had come from Norway, and no one was certain whether they would survive, breed, or cause the damage that farmers feared.',
+        text: 'For four hundred years, the Eurasian beaver was absent from most of Britain. Hunted relentlessly for its fur, meat and a secretion known as castoreum, which was prized in medicine, the animal had gone from most of England by the sixteenth century and from Scotland by the seventeenth. Only a handful of scattered reintroductions in continental Europe kept the species from complete regional extinction. Then, in 2009, a small number of beavers was released in Knapdale Forest in Argyll, Scotland, as part of a carefully monitored official trial. The animals had come from Norway, and no one was certain whether they would survive, breed, or cause the damage that farmers feared.',
       },
       {
         label: 'B',
@@ -46,7 +46,7 @@ export const READING_PASSAGES: ReadingPassage[] = [
           'Do the following statements agree with the information in the passage? Write TRUE if the statement agrees, FALSE if it contradicts, or NOT GIVEN if there is no information.',
         layout: 'list',
         questions: [
-          { number: 1, prompt: 'Beavers disappeared from Scotland before they disappeared from England.', type: 'select', options: ['TRUE', 'FALSE', 'NOT GIVEN'], answer: 'FALSE', explanation: 'The passage says they had gone from England and Wales by the 16th century and from Scotland by the 17th — Scotland was later.' },
+          { number: 1, prompt: 'Beavers disappeared from Scotland before they disappeared from England.', type: 'select', options: ['TRUE', 'FALSE', 'NOT GIVEN'], answer: 'FALSE', explanation: 'The passage says they had gone from most of England by the 16th century and from Scotland by the 17th — Scotland was later.' },
           { number: 2, prompt: 'The 2009 trial used beavers brought from Norway.', type: 'select', options: ['TRUE', 'FALSE', 'NOT GIVEN'], answer: 'TRUE', explanation: '"The animals had come from Norway".' },
           { number: 3, prompt: 'The Knapdale trial found that beaver dams reduced nitrate levels downstream.', type: 'select', options: ['TRUE', 'FALSE', 'NOT GIVEN'], answer: 'TRUE', explanation: '"Nitrate levels downstream fell".' },
           { number: 4, prompt: 'Farmers in the trial were required to pay for all repairs themselves.', type: 'select', options: ['TRUE', 'FALSE', 'NOT GIVEN'], answer: 'FALSE', explanation: 'A scheme to trap and relocate problem animals was provided; the passage says farmers could apply for help.' },

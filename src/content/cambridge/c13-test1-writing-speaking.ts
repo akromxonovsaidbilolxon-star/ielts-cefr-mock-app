@@ -1,3 +1,4 @@
+import { HOSPITAL_MAPS } from './figures-db';
 import type { CambridgeWritingTask } from './types';
 import type { SpeakingPart } from '../../types';
 
@@ -22,6 +23,7 @@ export const C13_T1_TASK1: CambridgeWritingTask = {
     'Do not give opinions or reasons for the changes. A report needs no conclusion.',
   ],
   figure: 'hospital-maps',
+  figurePanels: HOSPITAL_MAPS.panels,
 };
 
 export const C13_T1_TASK2: CambridgeWritingTask = {
