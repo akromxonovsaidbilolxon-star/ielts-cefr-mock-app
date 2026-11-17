@@ -72,6 +72,8 @@ src/
       c13-test1-writing-speaking.ts   Test 1: Writing + Speaking
       c13-test2.ts    Test 2: Listening 1–40 and Reading 1–40, transcribed
       c13-test2-writing-speaking.ts   Test 2: Writing + Speaking
+      c13-test3.ts    Test 3: Listening 1–40 and Reading 1–40, transcribed
+      c13-test3-writing-speaking.ts   Test 3: Writing + Speaking
       tables.ts       table grids with {{n}} blanks inside cells
       figures.ts      coordinates for the map/diagram line drawings
       index.ts        registry — add the next test here
@@ -221,8 +223,8 @@ papers**, transcribed from the owner's own books. These live in
 `src/content/cambridge/` and are a separate content tree: they never mix with the
 built-in paper, the Multilevel exam, or each other's saved results.
 
-Currently included: **Cambridge IELTS 13 Academic · Tests 1 and 2** — all four
-skills in each. Tests 3 and 4 have not been transcribed yet.
+Currently included: **Cambridge IELTS 13 Academic · Tests 1, 2 and 3** — all
+four skills in each. Test 4 has not been transcribed yet.
 
 The catalogue already groups by book (`groupByBook` in
 `src/content/cambridge/types.ts`), so adding Book 14 or a General Training paper
@@ -238,9 +240,11 @@ General Training papers of the same book are kept in separate groups.
 | Writing | the book's Task 1 and Task 2 | heuristic estimate |
 | Speaking | the book's Part 1, cue card and Part 3 | self-assessment |
 
-Test 1's Task 1 is a map comparison; Test 2's is a bar chart, which the app
-redraws in SVG — its bar heights are approximate, so candidates read the
-figures and use phrases like *about* and *just under*.
+Test 1's Task 1 is a map comparison; Test 2's and Test 3's are bar charts,
+which the app redraws in SVG. Test 2's bar heights are approximate, so
+candidates read them and use phrases like *about* and *just under*. Test 3's
+chart is different: the book prints the figure beside every bar, so the redrawn
+chart carries the exact 2014 production and consumption values (billion kWh).
 
 Question formats vary between tests, so the renderer has one layout per format
 the book uses: `list` (radio options), `compact` (dropdown against a shared

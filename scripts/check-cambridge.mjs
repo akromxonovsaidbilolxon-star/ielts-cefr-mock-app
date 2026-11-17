@@ -95,6 +95,37 @@ const KEY2_READING = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Test 3 keys, copied from the book's own Answer Key (pages 120-123).  */
+/* As in Test 2, Q17+18 and Q19+20 are printed as unordered pairs.      */
+/* ------------------------------------------------------------------ */
+
+const PAIRS_LISTENING_T3 = [[17, 18], [19, 20]];
+
+const KEY3_LISTENING = {
+  1: '850', 2: 'bike', 3: 'parking', 4: '30', 5: 'weekend',
+  6: 'cinema', 7: 'hospital', 8: 'dentist', 9: 'Thursday', 10: 'cafe',
+  11: 'F', 12: 'D', 13: 'A', 14: 'B', 15: 'C', 16: 'G',
+  17: 'B', 18: 'C', 19: 'B', 20: 'D',
+  21: 'C', 22: 'A', 23: 'A', 24: 'B', 25: 'C',
+  26: 'F', 27: 'H', 28: 'D', 29: 'A', 30: 'E',
+  31: 'tongue', 32: 'plants', 33: 'snakes', 34: 'sky', 35: 'partner',
+  36: 'contact', 37: 'protection', 38: 'tail', 39: 'steps', 40: 'injury',
+};
+
+const KEY3_READING = {
+  1: 'furniture', 2: 'sugar', 3: 'ropes', 4: 'charcoal', 5: 'bowls',
+  6: 'hormones', 7: 'cosmetics', 8: 'dynamite',
+  9: 'FALSE', 10: 'FALSE', 11: 'NOT GIVEN', 12: 'TRUE', 13: 'NOT GIVEN',
+  14: 'B', 15: 'C', 16: 'A', 17: 'B',
+  18: 'recording devices', 19: 'fathers', 20: 'bridge hypothesis',
+  21: 'repertoire', 22: 'audio-recording vests', 23: 'vocabulary',
+  24: 'F', 25: 'A', 26: 'E',
+  27: 'C', 28: 'H', 29: 'A', 30: 'B', 31: 'D',
+  32: 'shells', 33: 'lake', 34: 'rainfall', 35: 'grains', 36: 'pottery',
+  37: 'B', 38: 'A', 39: 'D', 40: 'A',
+};
+
+/* ------------------------------------------------------------------ */
 /* 2. Load the compiled content                                        */
 /* ------------------------------------------------------------------ */
 
@@ -152,6 +183,14 @@ const SUITE = [
     listeningKey: KEY2_LISTENING,
     readingKey: KEY2_READING,
     pairs: PAIRS_LISTENING,
+    task1Chart: true,
+    minSpeaking: 12,
+  },
+  {
+    test: mod.C13_TEST3,
+    listeningKey: KEY3_LISTENING,
+    readingKey: KEY3_READING,
+    pairs: PAIRS_LISTENING_T3,
     task1Chart: true,
     minSpeaking: 12,
   },

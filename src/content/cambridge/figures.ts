@@ -102,3 +102,42 @@ export const ENGLAND_WALES_TENURE = {
     { name: 'households in rented accommodation', values: [77, 68, 67, 59, 50, 40, 33, 31, 36] },
   ],
 } satisfies ChartSpec;
+
+/* ------------------------------------------------------------------ */
+/* Test 3 · Writing Task 1 — top ten electricity producers, 2014       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Horizontal bar chart: production vs consumption of electricity, 2014.
+ *
+ * These figures are the ones printed beside the bars in the book's own
+ * figure, so unlike the Test 2 chart this is not an approximation. Bars are
+ * ordered by rank (production), China first.
+ */
+export const ELECTRICITY_2014: ChartSpec = {
+  title: 'Top ten countries for the production and consumption of electricity, 2014 (billion kWh)',
+  yLabel: 'billion kWh',
+  yMax: 5500,
+  categories: [
+    'China',
+    'United States',
+    'Russia',
+    'Japan',
+    'India',
+    'Canada',
+    'France',
+    'Brazil',
+    'Germany',
+    'Korea, Rep.',
+  ],
+  series: [
+    {
+      name: 'Production',
+      values: [5398, 4099, 1057, 936.2, 871, 618.9, 561.2, 530.7, 526.6, 485.1],
+    },
+    {
+      name: 'Consumption',
+      values: [5322, 3866, 1038, 856.7, 698.8, 499.9, 462.9, 455.8, 582.5, 449.5],
+    },
+  ],
+};

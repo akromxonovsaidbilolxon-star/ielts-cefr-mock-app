@@ -237,6 +237,11 @@ export function CambridgeIndex() {
 
       {books.map((book) => {
         const missing = testsPerBook - book.tests.length;
+        // Name the tests that are actually absent, so the card says "Test 4"
+        // rather than a vague "one more test".
+        const missingNumbers = Array.from({ length: testsPerBook }, (_, i) => i + 1).filter(
+          (n) => !book.tests.some((t) => t.test === n),
+        );
         return (
           <section key={`${book.book}-${book.module}`} style={{ marginTop: '1.5rem' }}>
             <div className="row-between" style={{ alignItems: 'baseline', marginBottom: '0.7rem' }}>
@@ -279,7 +284,9 @@ export function CambridgeIndex() {
                     <span className="badge">Not yet</span>
                   </div>
                   <h3>
-                    {missing === 1 ? 'One more test' : `${missing} more tests`}
+                    {missingNumbers.length === 1
+                      ? `Test ${missingNumbers[0]}`
+                      : `Tests ${missingNumbers.join(', ')}`}
                   </h3>
                   <p>
                     Not transcribed yet. Each test is copied from the book by hand, so they are

@@ -3,6 +3,8 @@ import { C13_T1_LISTENING, C13_T1_READING } from './c13-test1';
 import { C13_T1_TASK1, C13_T1_TASK2, C13_T1_SPEAKING } from './c13-test1-writing-speaking';
 import { C13_T2_LISTENING, C13_T2_READING } from './c13-test2';
 import { C13_T2_TASK1, C13_T2_TASK2, C13_T2_SPEAKING } from './c13-test2-writing-speaking';
+import { C13_T3_LISTENING, C13_T3_READING } from './c13-test3';
+import { C13_T3_TASK1, C13_T3_TASK2, C13_T3_SPEAKING } from './c13-test3-writing-speaking';
 
 export * from './types';
 
@@ -59,8 +61,34 @@ export const C13_TEST2: CambridgeTest = {
   speaking: C13_T2_SPEAKING,
 };
 
+/**
+ * Cambridge IELTS 13, Academic, Test 3.
+ *
+ * Transcribed from the owner's own copy of the book, pages 54-75. Unlike the
+ * Test 2 chart, the Task 1 bar chart here carries the figures printed beside
+ * each bar in the book, so no values are estimated.
+ */
+export const C13_TEST3: CambridgeTest = {
+  id: 'c13-t3',
+  book: 13,
+  test: 3,
+  label: 'Cambridge IELTS 13 · Academic · Test 3',
+  source: {
+    bookTitle: 'Cambridge IELTS 13 Academic',
+    publisher: 'Cambridge University Press',
+    rights:
+      'Transcribed from Cambridge IELTS 13 Academic (Test 3), © Cambridge University Press. Used for private classroom teaching only — not for redistribution or resale.',
+    provenance:
+      'Questions and passages transcribed from the owner\'s copy of the book (pages 54–75); all 40 listening and 40 reading answers checked against the book\'s own Answer Key on pages 120–123. Listening recordings remain in the owner\'s own Google Drive and are streamed from there; no audio is copied into this repository. The Task 1 bar chart is redrawn from the printed figure using the values printed beside each bar.',
+  },
+  listening: C13_T3_LISTENING,
+  reading: C13_T3_READING,
+  writing: { task1: C13_T3_TASK1, task2: C13_T3_TASK2 },
+  speaking: C13_T3_SPEAKING,
+};
+
 /** Every Cambridge test available in the app, in book order. */
-export const CAMBRIDGE_TESTS: CambridgeTest[] = [C13_TEST1, C13_TEST2];
+export const CAMBRIDGE_TESTS: CambridgeTest[] = [C13_TEST1, C13_TEST2, C13_TEST3];
 
 export function getCambridgeTest(id: string | undefined): CambridgeTest | undefined {
   if (!id) return undefined;

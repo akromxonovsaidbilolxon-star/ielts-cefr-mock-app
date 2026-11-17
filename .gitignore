@@ -11,3 +11,9 @@ dist-ssr
 .env.production
 .env.local
 .env.*.local
+
+# Source material downloaded from the owner's Google Drive while transcribing.
+# Books and audio stay in Drive; only the transcribed .ts content is committed.
+google_drive/
+.work/
+.tmpcheck/
