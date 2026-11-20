@@ -25,6 +25,29 @@
       content="Free IELTS mock exam with Listening, Reading, Writing and Speaking, plus a CEFR level estimate."
     />
     <title>IELTS / CEFR Mock Exam</title>
+
+    <!--
+      Capture the install prompt as early as possible.
+
+      Android Chrome fires `beforeinstallprompt` once, shortly after the page
+      loads — often before React has mounted. If nothing is listening at that
+      exact moment the event is lost and the app can never be installed from
+      inside the app. This runs before any module, stashes the event, and
+      re-broadcasts it so a component that mounts later can still use it.
+    -->
+    <script>
+      (function () {
+        window.__deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (event) {
+          event.preventDefault();
+          window.__deferredInstallPrompt = event;
+          window.dispatchEvent(new Event('installpromptavailable'));
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__deferredInstallPrompt = null;
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

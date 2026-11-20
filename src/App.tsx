@@ -43,6 +43,15 @@ export default function App() {
         </div>
       }
     >
+    {/*
+      Mounted outside <Routes> and outside RequireAuth on purpose.
+      beforeinstallprompt fires once, shortly after the page loads — usually
+      while the visitor is still on the sign-in screen. When this component
+      lived inside RequireAuth it was not mounted at that moment, so it missed
+      the event entirely and the Install bar never appeared. That is why the
+      app could not be installed on Android.
+    */}
+    <InstallPrompt />
     <Routes>
       {/* Public: sign-in only. Accounts are created by the owner. */}
       <Route path="/login" element={<Login />} />
@@ -52,7 +61,6 @@ export default function App() {
         element={
           <RequireAuth>
             <StorageMigration />
-            <InstallPrompt />
             <Layout />
           </RequireAuth>
         }
