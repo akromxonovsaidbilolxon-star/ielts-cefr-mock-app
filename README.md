@@ -531,15 +531,40 @@ caching rules themselves change.
 Sign-in and the Google Drive recordings are deliberately **not** cached: they
 are cross-origin and are always fetched live.
 
-## Publishing (GitHub Pages)
+## Publishing
 
-The repo ships a workflow at `.github/workflows/deploy.yml` that type-checks,
-builds and publishes `dist/` to GitHub Pages on every push to `main`.
+Two hosts are wired up. **Vercel is the one in use** — it is what the live site
+runs on, and it picks up each pull request automatically.
 
-### ⚠️ Set the secrets first
+### Vercel (current host)
 
-The workflow **refuses to deploy** without Supabase credentials, because a build
-without them cannot sign anybody in.
+`vercel.json` pins the build settings, so no dashboard configuration is needed:
+Vite framework, `npm run build`, output in `dist/`, a catch-all rewrite to
+`index.html` (so deep links such as `/#/academy` work), and cache headers.
+
+Those headers matter. `index.html` and `sw.js` are served `no-cache`, so a new
+deploy is visible on the next load instead of being served from a phone's
+service worker cache; hashed files under `/assets/` are cached forever.
+
+**Supabase environment variables are optional on Vercel.** If they are present,
+the build is a normal live centre. If they are absent, the preview runs in
+**demo mode**: the sign-in screen offers *Enter as a teacher* / *Enter as a
+student* and the whole education centre works in the browser. That is why the
+Vercel preview can be reviewed without any secrets.
+
+To make a Vercel deployment live: **Project → Settings → Environment
+Variables** → add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, then redeploy.
+
+### GitHub Pages (alternative)
+
+The repo also ships a workflow at `.github/workflows/deploy.yml` that
+type-checks, builds and publishes `dist/` to GitHub Pages on every push to
+`main`.
+
+**This workflow refuses to deploy without Supabase credentials** — it fails the
+build rather than publish an app that cannot sign in (a demo build is fine on
+Vercel, but the Pages workflow is deliberately strict). If a GitHub Pages deploy
+shows "Sign-in is not configured", the secrets are missing.
 
 ### Steps
 

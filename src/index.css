@@ -1246,6 +1246,29 @@ input, textarea, select {
 }
 .auth-badge svg { width: 26px; height: 26px; }
 
+/* ---------------- icon sizing guarantee ----------------
+   Every icon in the app is an <svg> with a viewBox and no width/height
+   attributes (see components/Icons.tsx). Without an explicit size an SVG
+   defaults to 100% of its container, so one missing rule turns a small glyph
+   into a full-width graphic — that is what made the padlock on the sign-in
+   button fill the page. Sized rules elsewhere override this. */
+svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Drawings: an explicit width/height presentation attribute (as the charts and
+   figures use) always wins over CSS, so this is only a safety net for them. */
+.cfigure-svg,
+.ml-picture svg,
+.chart-card svg,
+.trend-svg {
+  height: auto;
+  flex-shrink: 1;
+}
+
 .auth-foot {
   margin-top: 1.2rem;
   padding-top: 1rem;
