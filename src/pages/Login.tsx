@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { EyeIcon, EyeOffIcon, LockIcon, ShieldIcon } from '../components/Icons';
 
 export default function Login() {
-  const { signIn, ready, user, unconfigured } = useAuth();
+  const { signIn, signInDemo, ready, user, unconfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -15,10 +15,13 @@ export default function Login() {
 
   const from = (location.state as { from?: string } | null)?.from ?? '/';
 
-  if (ready && user) {
-    navigate(from, { replace: true });
-    return null;
-  }
+  // Redirect after render, never during it: calling navigate() in the render
+  // body makes React warn about updating another component mid-render.
+  useEffect(() => {
+    if (ready && user) navigate(from, { replace: true });
+  }, [ready, user, from, navigate]);
+
+  if (ready && user) return null;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -118,6 +121,41 @@ export default function Login() {
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        {unconfigured && (
+          <div className="demo-signin">
+            <div className="demo-signin-head">
+              <span className="demo-signin-title">Try the app without an account</span>
+              <span className="tiny faint">
+                Demo mode keeps everything in this browser. Nothing is shared.
+              </span>
+            </div>
+            <div className="row wrap" style={{ gap: '0.45rem' }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={async () => {
+                  const result = await signInDemo('owner');
+                  if (result.ok) navigate('/academy', { replace: true });
+                  else setError(result.error ?? 'Could not start the demo.');
+                }}
+              >
+                Enter as a teacher
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-ghost"
+                onClick={async () => {
+                  const result = await signInDemo('student');
+                  if (result.ok) navigate('/academy', { replace: true });
+                  else setError(result.error ?? 'Could not start the demo.');
+                }}
+              >
+                Enter as a student
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="auth-foot tiny faint">
           Accounts are created by the app owner. There is no self-registration.

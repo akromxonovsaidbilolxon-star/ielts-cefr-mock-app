@@ -10,6 +10,7 @@ import {
   MicIcon,
   PenIcon,
   ShieldIcon,
+  GraduationIcon,
 } from './Icons';
 
 const NAV = [
@@ -20,6 +21,7 @@ const NAV = [
   { to: '/writing', label: 'Writing', short: 'Write', icon: <PenIcon /> },
   { to: '/speaking', label: 'Speaking', short: 'Speak', icon: <MicIcon /> },
   { to: '/progress', label: 'Progress', short: 'Progress', icon: <ChartIcon /> },
+  { to: '/academy', label: 'Centre', short: 'Centre', icon: <GraduationIcon /> },
 ];
 
 export default function Layout() {
@@ -125,6 +127,10 @@ export default function Layout() {
                   <Link to="/multilevel" className="account-menu-item" role="menuitem">
                     <BookIcon className="" />
                     Multilevel (CEFR)
+                  </Link>
+                  <Link to="/academy" className="account-menu-item" role="menuitem">
+                    <GraduationIcon className="" />
+                    Education centre
                   </Link>
                   <Link to="/progress" className="account-menu-item" role="menuitem">
                     <ChartIcon className="" />

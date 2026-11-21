@@ -1,7 +1,7 @@
 {
   "name": "IELTS / CEFR Mock Exam",
   "short_name": "IELTS Mock",
-  "description": "Full IELTS mock exam - Listening, Reading, Writing, Speaking - plus the Uzbekistan Multilevel (CEFR) exam.",
+  "description": "IELTS, CEFR and Multilevel mock exams plus the education centre: classes, homework with uploads, grades and a book library.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -35,6 +35,16 @@
     }
   ],
   "shortcuts": [
+    {
+      "name": "Education centre",
+      "short_name": "Centre",
+      "url": "./#/academy"
+    },
+    {
+      "name": "Homework",
+      "short_name": "Homework",
+      "url": "./#/academy/homework"
+    },
     {
       "name": "Listening test",
       "short_name": "Listening",

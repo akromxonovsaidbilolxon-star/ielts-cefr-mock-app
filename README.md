@@ -61,6 +61,19 @@ npm run preflight        # pre-deploy checklist
 
 ```
 src/
+  academy/          education centre (classes, homework, grades, books)
+    types.ts          domain model + derivations (state, averages, grades)
+    AcademyProvider   picks the backend, exposes one hook to every page
+    academyApi.ts     Supabase reads/writes (snake_case mapping)
+    demoStore.ts      browser-only backend used by demo mode
+    AcademyLayout     centre shell: tabs, teacher/student identity, preview
+    AcademyHome       overview — separate teacher and student dashboards
+    AcademyHomework   set homework, hand in (with uploads), mark + feedback
+    AcademyGrades     gradebook matrix, CSV export, student marks
+    AcademyLibrary    book shelf, upload, private downloads
+    AcademyClasses    classes, membership, per-student averages
+    files.ts          Storage / IndexedDB file handling
+    pdf.ts            tiny PDF writer for the demo books
   content/          exam material
     listening.ts    4 parts, scripts + question groups   (built-in free paper)
     reading.ts      3 academic passages + 40 questions   (built-in free paper)
@@ -295,6 +308,56 @@ app is therefore login-only, accounts are created by the owner, and every test
 page carries a **Source & permitted use** notice naming the book and stating the
 basis. Do not remove that notice, and do not publish the material outside the
 class.
+
+## Education centre (classes, homework, grades, books)
+
+The second half of the app: how the centre is actually **run**. It shares
+accounts, styling and deployment with the exam app, but is a separate area at
+`/#/academy`.
+
+| Area | Teacher (owner) | Student |
+| --- | --- | --- |
+| **Overview** | Marking queue, what is due, submission progress, class averages | "To do", average, recent feedback, books |
+| **Homework** | Set work per class, deadline + points, review and mark every hand-in with feedback | Read the task, type an answer, attach photos/PDF/Word, resubmit |
+| **Grades** | Gradebook matrix (students × assignments), click a cell to mark, CSV export | Own marks per assignment, percentage, letter grade, feedback |
+| **Library** | Upload books (PDF, Word, slides, images), edit details, delete | Read and download the centre's books |
+| **Classes** | Create classes, set level/schedule/colour, add students, see per-student averages | Their own groups |
+
+Everything is stored **in the database**, never in the browser, once Supabase is
+configured. Files go to two **private** Storage buckets (`academy-books`,
+`academy-submissions`) and are opened through short-lived signed URLs, because
+textbooks are licensed material.
+
+### Demo mode (no accounts needed)
+
+A build with no Supabase keys shows two buttons on the sign-in screen:
+
+* **Enter as a teacher** — a sample centre with 3 classes, 8 students, 7
+  homework assignments (graded, submitted, overdue and open), and 3 books with
+  generated PDFs you can actually open and read.
+* **Enter as a student** — the same centre seen through Madina's eyes: her
+  homework, her marks, her feedback.
+
+Demo data lives in this browser (`localStorage` + IndexedDB for files) and can be
+reset from the teacher overview. A teacher can also **preview as any student**
+from the overview at any time; that is a view filter only and never changes
+permissions.
+
+### Turning it on for a real centre
+
+1. Run `supabase/setup.sql` (accounts) if you have not already.
+2. Run **`supabase/academy.sql`** in the Supabase SQL editor. It creates five
+   tables, both Storage buckets, every RLS policy, and a trigger.
+3. Rebuild with your `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+4. Sign in as the owner, open **Centre → Classes**, create a class, then add the
+   students who already have accounts to it.
+
+Marks are teacher-only at the database level, not just in the UI: students may
+update their own answer and files, and a trigger rejects any change to
+`points`, `feedback` or `graded_at` unless the caller is an owner.
+
+There is no self-registration. Accounts are still created in the Supabase
+dashboard — see [Access control](#access-control-login).
 
 ## Access control (login)
 

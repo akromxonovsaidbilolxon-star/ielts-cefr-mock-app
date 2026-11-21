@@ -59,7 +59,12 @@ const sbKey = env.VITE_SUPABASE_ANON_KEY?.value;
 section('1. Supabase configuration');
 
 if (!sbUrl || !sbKey) {
-  bad('Supabase is not configured — nobody would be able to sign in.');
+  // Not fatal for a demonstration build: without keys the sign-in screen offers
+  // "Enter as a teacher / student", which runs the whole centre in this browser
+  // (demo mode). Real accounts still need Supabase, so say so loudly.
+  warn('Supabase is not configured — this build runs in DEMO MODE.');
+  info('Visitors can sign in as a demo teacher or student; nothing is shared and');
+  info('no real accounts exist. Configure Supabase before real students use it.');
   info('Add these to .env.production (or your host\'s environment settings):');
   info('  VITE_SUPABASE_URL=https://your-project.supabase.co');
   info('  VITE_SUPABASE_ANON_KEY=your-anon-key');
@@ -93,6 +98,12 @@ if (!sbUrl || !sbKey) {
 }
 
 section('2. Access rules');
+if (existsSync('supabase/academy.sql')) {
+  ok('supabase/academy.sql present — run it once for classes, homework and books');
+  info('It creates the education-centre tables, storage buckets and RLS policies.');
+} else {
+  warn('supabase/academy.sql is missing — the education centre would have no tables.');
+}
 if (existsSync('supabase/setup.sql')) {
   ok('supabase/setup.sql present — run it once in the Supabase SQL Editor');
   info('It creates the profiles table, RLS policies and the owner role.');

@@ -12,14 +12,13 @@ function Boot() {
 }
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
-  const { user, ready, unconfigured } = useAuth();
+  const { user, ready } = useAuth();
   const location = useLocation();
 
   if (!ready) return <Boot />;
 
-  // No Supabase credentials: refuse to pretend the app is protected.
-  if (unconfigured) return <Navigate to="/login" replace />;
-
+  // No Supabase credentials and no demo session: refuse to pretend the app is
+  // protected. A demo session (unconfigured builds only) is stored locally.
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
