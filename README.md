@@ -447,6 +447,33 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 Then `npm run build`. `npm run preflight` verifies both are present and that you
 have not accidentally pasted the service role key.
 
+### Locked out? Reset a password
+
+Two things are easy to confuse — fix the right one:
+
+| What you are logging into | Fix |
+| --- | --- |
+| **The app** (`…/#/login`, students and teachers) | Supabase → SQL Editor → run `supabase/fix-password.sql`, or Authentication → Users → **⋯ → Reset password** |
+| **The Supabase dashboard** (supabase.com) | Use **Forgot password** on the supabase.com sign-in page — this is a separate account from the app |
+
+`supabase/fix-password.sql` is a guided, copy-paste script:
+
+1. **STEP 1** reads the account and tells you exactly what is wrong — no account
+   for that email, unconfirmed address, missing profile, suspended, or not an
+   owner. It changes nothing.
+2. **STEP 2** sets a known password (bcrypt, the same hash Supabase Auth uses —
+   it works immediately, no redeploy).
+3. **STEP 3** fixes the cases that still block a *correct* password: a missing
+   `profiles` row or `status = 'suspended'`.
+4. **STEP 4** verifies the new password against the stored hash.
+
+> A correct password alone is not enough in this app. Sign-in requires a row in
+> `profiles` with `status = 'active'`, and the owner panel requires
+> `role = 'owner'`. That is deliberate — it stops an account that nobody can see
+> or control from slipping in. STEP 1 reports all four conditions.
+
+Never commit a real password. Change it once the person is back in.
+
 ### Which key goes where
 
 | Key | Safe in the browser? | Use |
