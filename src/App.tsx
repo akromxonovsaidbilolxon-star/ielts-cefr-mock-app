@@ -28,6 +28,14 @@ const CambridgeReading = lazy(() => import('./pages/CambridgeReading'));
 const CambridgeWriting = lazy(() => import('./pages/CambridgeWriting'));
 const CambridgeSpeaking = lazy(() => import('./pages/CambridgeSpeaking'));
 const CambridgeResults = lazy(() => import('./pages/CambridgeResults'));
+// Education centre (classes, homework, grades, book library) — code-split.
+const AcademyLayout = lazy(() => import('./academy/AcademyLayout'));
+const AcademyHome = lazy(() => import('./academy/AcademyHome'));
+const AcademyHomework = lazy(() => import('./academy/AcademyHomework'));
+const AcademyGrades = lazy(() => import('./academy/AcademyGrades'));
+const AcademyLibrary = lazy(() => import('./academy/AcademyLibrary'));
+const AcademyClasses = lazy(() => import('./academy/AcademyClasses'));
+import { AcademyProvider } from './academy/AcademyProvider';
 import NotFound from './pages/NotFound';
 import RequireAuth, { RequireOwner } from './auth/RequireAuth';
 import StorageMigration from './components/StorageMigration';
@@ -64,6 +72,22 @@ export default function App() {
         <Route path="/speaking" element={<SpeakingExam />} />
         <Route path="/results" element={<Results />} />
         <Route path="/progress" element={<Progress />} />
+
+        {/* Education centre — how the school runs classes, homework, marks and books */}
+        <Route
+          path="/academy"
+          element={
+            <AcademyProvider>
+              <AcademyLayout />
+            </AcademyProvider>
+          }
+        >
+          <Route index element={<AcademyHome />} />
+          <Route path="homework" element={<AcademyHomework />} />
+          <Route path="grades" element={<AcademyGrades />} />
+          <Route path="library" element={<AcademyLibrary />} />
+          <Route path="classes" element={<AcademyClasses />} />
+        </Route>
 
         {/* Multilevel (Uzbekistan) exam — separate content, timing and results */}
         <Route path="/multilevel" element={<MlHome />} />

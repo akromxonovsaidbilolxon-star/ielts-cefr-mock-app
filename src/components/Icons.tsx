@@ -242,3 +242,110 @@ export function HomeIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function ClipboardIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="M9 12h6M9 16h6" />
+    </svg>
+  );
+}
+
+export function GraduationIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M22 9 12 4 2 9l10 5 10-5z" />
+      <path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5" />
+      <path d="M22 9v5" />
+    </svg>
+  );
+}
+
+export function BookOpenIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z" />
+      <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z" />
+    </svg>
+  );
+}
+
+export function UploadIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 8 5-5 5 5M12 3v12" />
+    </svg>
+  );
+}
+
+export function DownloadIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="m7 10 5 5 5-5M12 15V3" />
+    </svg>
+  );
+}
+
+export function PlusIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function CalendarIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+export function SearchIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+export function LayersIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m12 2 9 5-9 5-9-5z" />
+      <path d="m3 12 9 5 9-5M3 17l9 5 9-5" />
+    </svg>
+  );
+}
+
+export function FileIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6M9 14h6M9 18h4" />
+    </svg>
+  );
+}
+
+export function StarIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.3-6.2 3.3L7 14.2 2 9.3l6.9-1z" />
+    </svg>
+  );
+}
+
+export function PaperclipIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M21.4 11.05 12.25 20.2a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.67 3.67 0 0 1 5.19 5.19l-9.2 9.19a1.83 1.83 0 0 1-2.59-2.59l8.49-8.48" />
+    </svg>
+  );
+}

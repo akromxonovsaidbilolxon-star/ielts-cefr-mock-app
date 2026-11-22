@@ -31,12 +31,44 @@ export interface LoginResult {
   error?: string;
 }
 
+/**
+ * Demo session.
+ *
+ * Only offered by builds with no Supabase credentials — in those builds nobody
+ * can sign in at all, so this weakens nothing. It exists so the education
+ * centre can be demonstrated and used offline before a database is connected.
+ * Live builds never read this key.
+ */
+const DEMO_USER_KEY = 'ielts-mock:demo-user:v1';
+
+interface DemoUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: Role;
+}
+
+function readDemoUser(): AuthUser | null {
+  if (isConfigured) return null;
+  try {
+    const raw = localStorage.getItem(DEMO_USER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DemoUser;
+    if (!parsed?.id) return null;
+    return { ...parsed, status: 'active' };
+  } catch {
+    return null;
+  }
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   ready: boolean;
   /** True when the build has no Supabase credentials — the app cannot lock. */
   unconfigured: boolean;
   signIn: (email: string, password: string) => Promise<LoginResult>;
+  /** Demo-only sign-in for unconfigured builds. */
+  signInDemo: (role: Role) => Promise<LoginResult>;
   signOut: () => Promise<void>;
   /** Re-reads the profile (used after an owner edits their own account). */
   refreshUser: () => Promise<void>;
@@ -69,8 +101,14 @@ function explain(message: string): string {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(() => readDemoUser());
   const [ready, setReady] = useState(!isConfigured);
+
+  // Browser storage is namespaced per user. A restored demo session must set
+  // that namespace before anything else runs, or its data lands under "anon".
+  useEffect(() => {
+    if (user?.id) setCurrentUserId(user.id);
+  }, [user?.id]);
   const readyRef = useRef(false);
 
   /**
@@ -173,8 +211,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const signInDemo = useCallback(async (role: Role): Promise<LoginResult> => {
+    if (isConfigured) {
+      return { ok: false, error: 'Demo sign-in is not available on this build. Use your email and password.' };
+    }
+    const demo: DemoUser =
+      role === 'owner'
+        ? { id: 'demo-teacher', email: 'teacher@demo.local', displayName: 'Demo Teacher', role: 'owner' }
+        : { id: 'demo-student', email: 'student@demo.local', displayName: 'Demo Student', role: 'student' };
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(demo));
+    setCurrentUserId(demo.id);
+    setUser({ ...demo, status: 'active' });
+    setReady(true);
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
     if (isConfigured) await getSupabase().auth.signOut();
+    try {
+      localStorage.removeItem(DEMO_USER_KEY);
+    } catch {
+      /* private mode */
+    }
     setCurrentUserId(null);
     setUser(null);
   }, []);
@@ -186,8 +244,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applySession]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, ready, unconfigured: !isConfigured, signIn, signOut, refreshUser }),
-    [user, ready, signIn, signOut, refreshUser],
+    () => ({ user, ready, unconfigured: !isConfigured, signIn, signInDemo, signOut, refreshUser }),
+    [user, ready, signIn, signInDemo, signOut, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
