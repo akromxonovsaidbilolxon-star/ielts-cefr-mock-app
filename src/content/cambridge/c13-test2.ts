@@ -6,8 +6,8 @@ import type { CambridgePassage, CambridgeSection } from './types';
 
 /**
  * Every word below is transcribed from the owner's copy of the book
- * (pages 32–37). The recordings stay in the owner's Google Drive and are
- * streamed from there — no audio is stored in this repository.
+ * (pages 32–37). Recording paths target the private Supabase Storage bucket;
+ * Drive IDs remain temporarily as a fallback while files are migrated.
  */
 export const C13_T2_LISTENING: CambridgeSection[] = [
   {
@@ -18,6 +18,7 @@ export const C13_T2_LISTENING: CambridgeSection[] = [
       'A woman telephones a cycling club to ask about membership and training rides.',
     audio: {
       driveId: '1Tib38EMnbwF1bTKplXTiGFMwpj1x3kRQ',
+      storagePath: 'c13/t2/section-1.mp3',
       filename: 'IELTS13-Test 2, Section 1.mp3',
       bytes: 6252297,
     },
@@ -148,6 +149,7 @@ export const C13_T2_LISTENING: CambridgeSection[] = [
       'A talk to staff about the company’s volunteering programme and its Digital Inclusion Day.',
     audio: {
       driveId: '1n4FdVCgFxY7Xqsf6HjP7Eyu7iSQ5tsQ2',
+      storagePath: 'c13/t2/section-2.mp3',
       filename: 'IELTS13-Test 2, Section 2.mp3',
       bytes: 5279180,
     },
@@ -304,6 +306,7 @@ export const C13_T2_LISTENING: CambridgeSection[] = [
     intro: 'A student, Russ, discusses his presentation with his tutor.',
     audio: {
       driveId: '1mX3qC-mGBiOzchmuBcFSrZJwZWforZmZ',
+      storagePath: 'c13/t2/section-3.mp3',
       filename: 'IELTS13-Test 2, Section 3.mp3',
       bytes: 5142399,
     },
@@ -450,6 +453,7 @@ export const C13_T2_LISTENING: CambridgeSection[] = [
     intro: 'A lecture on how memories of personal events are formed and retrieved.',
     audio: {
       driveId: '182xVUspNMOivkSIzilgnBRM4vsFx5wIn',
+      storagePath: 'c13/t2/section-4.mp3',
       filename: 'IELTS13-Test 2, Section 4.mp3',
       bytes: 6521790,
     },

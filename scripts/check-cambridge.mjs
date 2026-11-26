@@ -230,8 +230,9 @@ for (const S of SUITE) {
     if (nums.length === expected) ok(`Section ${s.id}: ${nums.length} questions (${nums[0]}–${nums[nums.length - 1]})`);
     else bad(`Section ${s.id}: ${nums.length} questions, expected ${expected}`);
 
-    if (s.audio?.driveId) ok(`Section ${s.id}: audio → ${s.audio.filename}`);
-    else bad(`Section ${s.id}: no Drive audio registered`);
+    if (s.audio?.storagePath || s.audio?.driveId) ok(`Section ${s.id}: audio → ${s.audio.filename}`);
+    else bad(`Section ${s.id}: no audio registered`);
+    if (s.audio?.storagePath) ok(`Section ${s.id}: private storage path registered`);
   }
 
   section('3. Reading structure');

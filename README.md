@@ -46,6 +46,30 @@ npm run check:cambridge  # verify the Cambridge content against the printed key
 npm run preflight        # pre-deploy checklist
 ```
 
+## Android APK
+
+The project includes a Capacitor Android wrapper. On pushes to `main` or an
+`arena/**` branch, GitHub Actions builds a directly installable **debug APK**;
+you can also start it manually from **Actions → Build Android APK → Run
+workflow**. Download `ielts-cefr-mock-android-apk` from that run's Artifacts
+section, then open the APK on an Android device to install it. Android may ask
+you to allow installs from that browser or file manager. The APK bundles the
+web app built by that workflow; sign-in and Cambridge content still use the
+configured Supabase service and require internet access.
+
+For a local native build, install Android Studio (including Android SDK 36) and
+JDK 21, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the shell, then
+run:
+
+```bash
+npm ci
+npm run android:sync
+cd android && ./gradlew assembleDebug
+```
+
+The output is `android/app/build/outputs/apk/debug/app-debug.apk`. This debug
+APK is for direct installation/testing, not a Play Store release.
+
 ## Tech stack
 
 - **React 19** + **TypeScript** (strict) + **Vite 7**
@@ -243,6 +267,15 @@ Set up the table once with `supabase/cambridge-content.sql`. Row Level Security
 grants `select` only to signed-in accounts whose profile is `active`; the
 `anon` role has no access at all.
 
+### Private listening audio
+
+Run `supabase/cambridge-audio-storage.sql` to create the private `cambridge-audio`
+bucket and its active-member/owner policies. Upload recordings in Supabase
+Dashboard → Storage using the paths in each test's `storagePath` field; for
+Cambridge IELTS 13 Tests 1–3 these are `c13/t1/section-1.mp3` through
+`c13/t3/section-4.mp3`. The signed-in app gets a short-lived playback URL and
+uses its normal one-click audio control. Legacy Drive IDs remain as a fallback
+until the private copies are uploaded.
 This split exists because the passages used to sit in `index-*.js`, where
 anyone could read them without signing in. The source `.ts` files remain in the
 repo as the input to step 2, but only `registry.ts` imports them — and nothing

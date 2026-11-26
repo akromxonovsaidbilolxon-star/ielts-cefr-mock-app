@@ -16,6 +16,7 @@ export const C13_T3_LISTENING: CambridgeSection[] = [
     intro: 'A conversation about moving to a suburb of a city.',
     audio: {
       driveId: '1BTog2rkYz77vfvC_tVkMqUDohJEzyVad',
+      storagePath: 'c13/t3/section-1.mp3',
       filename: 'IELTS13-Tests 3, Section 1.mp3',
       bytes: 6581260,
     },
@@ -143,6 +144,7 @@ export const C13_T3_LISTENING: CambridgeSection[] = [
     intro: 'A talk about taking up different kinds of exercise.',
     audio: {
       driveId: '1OEB78Yd097whK3LjbYhBrPauDGTGrmph',
+      storagePath: 'c13/t3/section-2.mp3',
       filename: 'IELTS13-Test 3, Section 2.mp3',
       bytes: 4570861,
     },
@@ -308,6 +310,7 @@ export const C13_T3_LISTENING: CambridgeSection[] = [
     intro: 'A student discusses his project with his tutor.',
     audio: {
       driveId: '1GEBm8h2XvHA1JDwN0mwUIEosVX_MfHkl',
+      storagePath: 'c13/t3/section-3.mp3',
       filename: 'IELTS13-Test 3, Section 3.mp3',
       bytes: 4776502,
     },
@@ -450,6 +453,7 @@ export const C13_T3_LISTENING: CambridgeSection[] = [
     intro: 'A lecture about a lizard found in Australia.',
     audio: {
       driveId: '1PqcpfjY1aBLw8MNQ0tbvbibRxSHYO3ee',
+      storagePath: 'c13/t3/section-4.mp3',
       filename: 'IELTS13-Tests 3, Section 4.mp3',
       bytes: 4789022,
     },

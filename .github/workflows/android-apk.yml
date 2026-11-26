@@ -1,0 +1,81 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build installable Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Supabase configuration
+        env:
+          SB_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SB_ANON: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SB_URL" ] || [ -z "$SB_ANON" ]; then
+            echo "::error::Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in repository Actions secrets before building the APK."
+            exit 1
+          fi
+          ROLE=$(printf '%s' "$SB_ANON" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).role||"")}catch{console.log("")}})' || true)
+          if [ "$ROLE" = "service_role" ]; then
+            echo "::error::The anon key secret is a service_role key. Refusing to package it."
+            exit 1
+          fi
+
+      - name: Build web app and validate content
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm run build
+          npm run check:bundle
+          npm run check:cambridge
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform and build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Sync web app into native Android project
+        run: npx cap sync android
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Publish APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ielts-cefr-mock-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30

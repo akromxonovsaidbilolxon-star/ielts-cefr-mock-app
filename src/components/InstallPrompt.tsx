@@ -24,7 +24,8 @@ function capturedPrompt(): BeforeInstallPromptEvent | null {
 /** True when the app is already running installed, so nothing should be shown. */
 function isStandalone(): boolean {
   if (typeof window === 'undefined') return true;
-  return window.matchMedia('(display-mode: standalone)').matches;
+  const capacitor = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return Boolean(capacitor?.isNativePlatform?.()) || window.matchMedia('(display-mode: standalone)').matches;
 }
 
 function wasDismissed(): boolean {

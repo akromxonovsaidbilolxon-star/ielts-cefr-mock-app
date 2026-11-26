@@ -17,6 +17,7 @@ export const C13_T1_LISTENING: CambridgeSection[] = [
     intro: 'A conversation between a man and a woman about taking a cookery class.',
     audio: {
       driveId: '1quq4Abd8ALT1qM_tFm6cLXI5yVsOxzOe',
+      storagePath: 'c13/t1/section-1.mp3',
       filename: 'IELTS13-Test 1,Section-1.mp3',
       bytes: 5380592,
     },
@@ -116,6 +117,7 @@ export const C13_T1_LISTENING: CambridgeSection[] = [
     intro: 'A talk to local residents about proposed changes to the road system.',
     audio: {
       driveId: '1LG3HGMh-LWrex2URwKbCBusSSs13Z-_r',
+      storagePath: 'c13/t1/section-2.mp3',
       filename: 'IELTS13-Test 1, Section 2.mp3',
       bytes: 4868211,
     },
@@ -208,6 +210,7 @@ export const C13_T1_LISTENING: CambridgeSection[] = [
     intro: 'Two students, Jack and Emma, discuss their practical project with their tutor.',
     audio: {
       driveId: '18ltn1iaGZ93P-w7LmsuEcXcXoFRGVZ2X',
+      storagePath: 'c13/t1/section-3.mp3',
       filename: 'IELTS13-Test 1, Section 3.mp3',
       bytes: 5120802,
     },
@@ -329,6 +332,7 @@ export const C13_T1_LISTENING: CambridgeSection[] = [
     intro: 'A lecture on how city life is changing the animals that live alongside us.',
     audio: {
       driveId: '1q3UN6NOv-ugSukJX15M4oPJMvObpD3fL',
+      storagePath: 'c13/t1/section-4.mp3',
       filename: 'IELTS13-Test 1, Section 4.mp3',
       bytes: 5030345,
     },

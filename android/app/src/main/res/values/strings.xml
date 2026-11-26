@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">IELTS CEFR Mock</string>
+    <string name="title_activity_main">IELTS CEFR Mock</string>
+    <string name="package_name">uz.ieltscefr.mock</string>
+    <string name="custom_url_scheme">uz.ieltscefr.mock</string>
+</resources>
