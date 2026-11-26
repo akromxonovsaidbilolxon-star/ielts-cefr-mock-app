@@ -85,11 +85,13 @@ export interface CambridgeGroup {
   };
 }
 
-/** Where a real recording lives. Files stay in the owner's Google Drive. */
+/** Where a real recording lives. Private Storage is preferred; Drive is legacy fallback. */
 export interface CambridgeAudio {
-  /** Google Drive file id — the file is shared "anyone with the link". */
-  driveId: string;
-  /** Original filename in Drive, shown so the owner can re-check it. */
+  /** Path inside the private `cambridge-audio` Supabase Storage bucket. */
+  storagePath?: string;
+  /** Legacy Google Drive file id used only until the private copy is uploaded. */
+  driveId?: string;
+  /** Original filename, shown to the learner and owner. */
   filename: string;
   bytes?: number;
 }

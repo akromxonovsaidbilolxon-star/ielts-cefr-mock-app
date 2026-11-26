@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CambridgeAudio } from '../content/cambridge/types';
+import { getSupabase, isConfigured } from '../lib/supabase';
 import { PauseIcon, PlayIcon, StopIcon, SpeakerIcon } from './Icons';
 
 /**
  * Plays a real Cambridge recording.
  *
- * The files live in the owner's Google Drive, not in this repository: a
- * Cambridge book is copyright material and 16 MP3s per book would bloat the
- * repo past what GitHub Pages serves comfortably. Each file is shared
- * "anyone with the link", so the browser can stream it directly.
+ * Private Supabase Storage is preferred: the app requests a short-lived signed
+ * URL and plays it through the same one-click audio control. Legacy Google
+ * Drive links remain as a fallback while the owner moves the files over.
  *
- * Google serves the same file from several hosts and changes which ones work
- * without notice, so the player tries each in turn and only gives up after all
- * of them fail. If none work, it offers the Drive preview and a download link
- * rather than showing a silently broken play button.
+ * Google serves files from multiple hosts, so the player tries each in turn.
+ * If those fail too, it falls back to Drive's embedded player.
  */
 
 const SOURCES = (id: string) => [
@@ -23,7 +21,6 @@ const SOURCES = (id: string) => [
 ];
 
 const PREVIEW = (id: string) => `https://drive.google.com/file/d/${id}/preview`;
-const VIEW = (id: string) => `https://drive.google.com/file/d/${id}/view`;
 
 interface Props {
   audio: CambridgeAudio;
@@ -34,11 +31,11 @@ interface Props {
 
 export default function CambridgeAudioPlayer({ audio, label }: Props) {
   const [sourceIndex, setSourceIndex] = useState(0);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [rate, setRate] = useState(1);
   const [failed, setFailed] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -48,8 +45,35 @@ export default function CambridgeAudioPlayer({ audio, label }: Props) {
     setPlaying(false);
     setProgress(0);
     setDuration(null);
-    setShowPreview(false);
-  }, [audio.driveId]);
+  }, [audio.driveId, audio.storagePath]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSignedUrl(null);
+
+    if (!audio.storagePath || !isConfigured) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void getSupabase()
+      .storage.from('cambridge-audio')
+      .createSignedUrl(audio.storagePath, 4 * 60 * 60)
+      .then(({ data, error }) => {
+        if (!cancelled) setSignedUrl(error ? null : data?.signedUrl ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setSignedUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [audio.storagePath]);
+
+  const driveSources = audio.driveId ? SOURCES(audio.driveId) : [];
+  const activeSource = signedUrl ?? driveSources[sourceIndex] ?? null;
 
   useEffect(() => {
     const el = audioRef.current;
@@ -73,21 +97,29 @@ export default function CambridgeAudioPlayer({ audio, label }: Props) {
   }, [sourceIndex]);
 
   const handleError = useCallback(() => {
-    // Try the next Drive host before declaring the recording unavailable.
+    setPlaying(false);
+
+    // If private Storage failed, switch to the legacy Drive stream first.
+    if (signedUrl) {
+      setSignedUrl(null);
+      setSourceIndex(0);
+      return;
+    }
+
+    // Try Drive's alternate stream hosts before showing the embedded fallback.
     setSourceIndex((prev) => {
       const next = prev + 1;
-      if (next >= SOURCES(audio.driveId).length) {
+      if (next >= driveSources.length) {
         setFailed(true);
         return prev;
       }
       return next;
     });
-    setPlaying(false);
-  }, [audio.driveId]);
+  }, [driveSources.length, signedUrl]);
 
   const toggle = useCallback(async () => {
     const el = audioRef.current;
-    if (!el) return;
+    if (!el || !activeSource) return;
     if (el.paused) {
       try {
         await el.play();
@@ -99,7 +131,7 @@ export default function CambridgeAudioPlayer({ audio, label }: Props) {
       el.pause();
       setPlaying(false);
     }
-  }, [handleError]);
+  }, [activeSource, handleError]);
 
   const stop = useCallback(() => {
     const el = audioRef.current;
@@ -123,59 +155,28 @@ export default function CambridgeAudioPlayer({ audio, label }: Props) {
 
   const [mm, ss] = duration ? formatClock(duration) : ['--', '--'];
 
-  if (failed) {
+  if (failed && audio.driveId) {
     return (
-      <div className="callout callout-warn" style={{ marginTop: '0.6rem' }}>
-        <div className="callout-title">The recording did not load</div>
-        <p style={{ margin: '0.35rem 0 0.6rem' }}>
-          <b>{audio.filename}</b> is stored in your Google Drive. The browser could not stream it
-          — usually because the file is no longer shared with "anyone with the link", or Drive is
-          blocked on this network.
-        </p>
-        <div className="row wrap" style={{ gap: '0.5rem' }}>
-          <button type="button" className="btn btn-sm" onClick={() => setShowPreview((v) => !v)}>
-            {showPreview ? 'Hide Drive preview' : 'Try the Drive preview'}
-          </button>
-          <a
-            className="btn btn-ghost btn-sm"
-            href={VIEW(audio.driveId)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open in Google Drive ↗
-          </a>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              setSourceIndex(0);
-              setFailed(false);
-            }}
-          >
-            Retry
-          </button>
-        </div>
-        {showPreview && (
-          <iframe
-            src={PREVIEW(audio.driveId)}
-            title={`${audio.filename} preview`}
-            style={{ width: '100%', height: 92, border: '1px solid var(--border)', borderRadius: 8, marginTop: '0.6rem' }}
-            allow="autoplay"
-          />
-        )}
-        <p className="tiny muted" style={{ marginTop: '0.6rem' }}>
-          Teacher fix: in Drive, right-click the file → Share → General access →{' '}
-          <b>Anyone with the link</b>. Then reload this page.
-        </p>
+      <div className="audio-bar" aria-label="Remote audio player">
+        <iframe
+          src={PREVIEW(audio.driveId)}
+          title={`${audio.filename} audio player`}
+          style={{ width: '100%', height: 72, border: 0, borderRadius: 8 }}
+          allow="autoplay; encrypted-media"
+        />
       </div>
     );
+  }
+
+  if (failed) {
+    return <div className="audio-bar tiny muted">Recording unavailable. Contact your teacher.</div>;
   }
 
   return (
     <div className="audio-bar">
       <audio
         ref={audioRef}
-        src={SOURCES(audio.driveId)[sourceIndex]}
+        src={activeSource ?? undefined}
         preload="metadata"
         onError={handleError}
       />
@@ -184,7 +185,8 @@ export default function CambridgeAudioPlayer({ audio, label }: Props) {
         type="button"
         className="play-btn"
         onClick={toggle}
-        aria-label={playing ? 'Pause recording' : 'Play recording'}
+        disabled={!activeSource}
+        aria-label={playing ? 'Pause recording' : activeSource ? 'Play recording' : 'Preparing recording'}
       >
         {playing ? <PauseIcon /> : <PlayIcon />}
       </button>
